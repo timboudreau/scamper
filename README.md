@@ -17,6 +17,9 @@ to write your own payloads, simply make the payload a
 [ByteBuf](http://netty.io/5.0/api/io/netty/buffer/ByteBuf.html) and
 no encoding or decoding will be done.
 
+Javadoc is [available here](http://timboudreau.com/builds/job/scamper/lastSuccessfulBuild/artifact/scamper/target/apidocs/index.html)
+and the library is available via Maven [as described here](http://timboudreau.com/builds/).
+
 
 What It Does
 ------------
@@ -31,10 +34,6 @@ SCTP is message-oriented, like UDP, as opposed to stream-oriented like TCP,
 and has the benefit that messages do not block each other, and multiple messages
 can be on the wire on the same connection at the same time.  Strict order is
 optional.
-
-Javadoc is [available here](http://timboudreau.com/builds/job/scamper/lastSuccessfulBuild/artifact/scamper/target/apidocs/index.html)
-and the library is available via Maven [as described here](http://timboudreau.com/builds/).
-
 
 Requirements
 ------------
