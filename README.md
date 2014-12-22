@@ -155,4 +155,12 @@ with SCTP.
 License
 =======
 
-GNU Affero license, version 3.
+[GNU Affero license, version 3](http://www.gnu.org/licenses/agpl-3.0.html)
+
+
+Why is it called Scamper?
+-------------------------
+
+Well, I was shooting for something that incorporated SCTP, but Scamtper is,
+unpronouncable, Scampter would get the order wrong, and Scatup didn't 
+sound very nice at all.
