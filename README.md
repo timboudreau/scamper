@@ -104,7 +104,7 @@ classes for both of them
 connection is closed
  * Wait forever on that future, blocking the main thread
 
-[Full source code for the server demo](blob/master/scamper-date-demo/src/main/java/com/mastfrog/scamper/demo/dates/DateDemo.java)
+[Full source code for the server demo](https://github.com/timboudreau/scamper/blob/master/scamper-date-demo/src/main/java/com/mastfrog/scamper/demo/dates/DateDemo.java)
 
 
 Writing a Client
@@ -144,7 +144,7 @@ What this does:
 
 See the subproject `scamper-date-demo` to build and run this.
 
-[Full source code for the client demo](blob/master/scamper-date-demo/src/main/java/com/mastfrog/scamper/demo/dates/DateClientDemo.java(
+[Full source code for the client demo](https://github.com/timboudreau/scamper/blob/master/scamper-date-demo/src/main/java/com/mastfrog/scamper/demo/dates/DateClientDemo.java(
 
 Status
 ======
