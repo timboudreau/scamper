@@ -32,6 +32,9 @@ and has the benefit that messages do not block each other, and multiple messages
 can be on the wire on the same connection at the same time.  Strict order is
 optional.
 
+Javadoc is [available here](http://timboudreau.com/builds/job/scamper/lastSuccessfulBuild/artifact/scamper/target/apidocs/index.html)
+and the library is available via Maven [as described here](http://timboudreau.com/builds/).
+
 
 Requirements
 ------------
