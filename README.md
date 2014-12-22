@@ -144,7 +144,7 @@ What this does:
 
 See the subproject `scamper-date-demo` to build and run this.
 
-[Full source code for the client demo](https://github.com/timboudreau/scamper/blob/master/scamper-date-demo/src/main/java/com/mastfrog/scamper/demo/dates/DateClientDemo.java(
+[Full source code for the client demo](https://github.com/timboudreau/scamper/blob/master/scamper-date-demo/src/main/java/com/mastfrog/scamper/demo/dates/DateClientDemo.java)
 
 Status
 ======
