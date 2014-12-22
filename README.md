@@ -145,3 +145,8 @@ Status
 
 This library is fairly embryonic, but is usable at this point for experimenting
 with SCTP.
+
+License
+=======
+
+GNU Affero license, version 3.
