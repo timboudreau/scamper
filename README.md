@@ -43,6 +43,9 @@ an error about not being able to load a native library, that's the problem.
 In other situations, you may need to make sure SCTP support is compiled into
 your OS kernel.
 
+If you use the BSON support (i.e. you want to pass POJOs as messages), those
+classes will need to be serializable/deserializable by Jackson.
+
 
 Writing A Server
 ----------------
@@ -140,6 +143,7 @@ What this does:
 
  * Configure a Sender with handlers for our message types
  * Loop forever sending a `WHAT_TIME_IS_IT` message every 5 seconds
+    * A Message object is simply a wrapper for a message type and a payload
  * You will see the response logged
 
 See the subproject `scamper-date-demo` to build and run this.
