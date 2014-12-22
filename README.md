@@ -6,7 +6,7 @@ A toolkit to make it easy to write Java servers and clients that use
 transport, using [Netty](http://netty.io) under the hood.
 
 Servers and clients can register `MessageType`s and `MessageHandler`s that
-receive messages of those types.  Each messaage sent or received by this
+receive messages of those types.  Each message sent or received by this
 library has a 3-byte header identifying the message.  The remaining payload
 of a message is up to you.
 
