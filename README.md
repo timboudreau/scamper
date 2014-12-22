@@ -8,7 +8,8 @@ transport, using [Netty](http://netty.io) under the hood.
 Servers and clients can register `MessageType`s and `MessageHandler`s that
 receive messages of those types.  Each message sent or received by this
 library has a 3-byte header identifying the message.  The remaining payload
-of a message is up to you.
+of a message is up to you.  You define message types and write handlers
+that receive those messages, or use a `Sender` to send them elsewhere.
 
 For convenience, by default message payloads
 are encoded using [BSON](http://en.wikipedia.org/wiki/BSON) using 
@@ -155,6 +156,15 @@ Status
 
 This library is fairly embryonic, but is usable at this point for experimenting
 with SCTP.
+
+To-Do
+-----
+
+ * Support for multi-homing (right now you could grab the Java SCTP connection after the fact
+and add them perhaps - haven't tried it) - should be a first-class feature
+ * Expire long-unused connections in `Associations` on a timeout
+   * Requires some plumbing to touch a timestamp on each one when it is used
+ * Repackage into a single package to hide a few implementation classes (e.g. Init)
 
 License
 =======
