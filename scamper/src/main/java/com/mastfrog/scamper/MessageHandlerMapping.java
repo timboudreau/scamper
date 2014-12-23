@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.protocol;
+package com.mastfrog.scamper;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Singleton;
@@ -32,7 +32,7 @@ import java.util.Map;
  *
  * @author Tim Boudreau
  */
-class MessageHandlerMapping {
+final class MessageHandlerMapping {
 
     private final Map<MessageType, Class<? extends MessageHandler<?, ?>>> map;
 

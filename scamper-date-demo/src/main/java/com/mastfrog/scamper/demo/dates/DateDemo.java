@@ -1,11 +1,11 @@
 package com.mastfrog.scamper.demo.dates;
 
 import com.mastfrog.scamper.SctpServer;
-import com.mastfrog.scamper.protocol.Control;
-import com.mastfrog.scamper.protocol.Message;
-import com.mastfrog.scamper.protocol.MessageHandler;
-import com.mastfrog.scamper.protocol.MessageType;
-import com.mastfrog.scamper.protocol.SctpServerAndClientBuilder;
+import com.mastfrog.scamper.Control;
+import com.mastfrog.scamper.Message;
+import com.mastfrog.scamper.MessageHandler;
+import com.mastfrog.scamper.MessageType;
+import com.mastfrog.scamper.SctpServerAndClientBuilder;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import java.io.IOException;

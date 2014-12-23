@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.protocol;
+package com.mastfrog.scamper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
@@ -24,7 +24,6 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.mastfrog.giulius.ShutdownHookRegistry;
-import com.mastfrog.scamper.protocol.Message;
 import com.mastfrog.util.Codec;
 import de.undercouch.bson4jackson.BsonFactory;
 import io.netty.buffer.ByteBufAllocator;
@@ -48,31 +47,33 @@ import java.io.OutputStream;
  */
 final class NettyBootstrapModule extends AbstractModule {
 
-    private final BsonFactory bsonFactory = new BsonFactory();
     private final Class<? extends ChannelHandlerAdapter> adap;
     private final int bossThreads;
     private final int workerThreads;
+    private final boolean useBson;
 
-    public NettyBootstrapModule(Class<? extends ChannelHandlerAdapter> adap) {
-        this(adap, 2, -1);
-    }
-
-    public NettyBootstrapModule(Class<? extends ChannelHandlerAdapter> adap, int bossThreads, int workerThreads) {
+    public NettyBootstrapModule(Class<? extends ChannelHandlerAdapter> adap, int bossThreads, int workerThreads, boolean useBson) {
         this.adap = adap;
         this.bossThreads = bossThreads;
         this.workerThreads = workerThreads;
+        this.useBson = useBson;
     }
 
     @Override
     protected void configure() {
+        if (useBson) {
+            BsonFactory bsonFactory = new BsonFactory();
+            bind(BsonFactory.class).toInstance(bsonFactory);
+            bind(ObjectMapper.class).toInstance(new ObjectMapper(bsonFactory));
+        } else {
+            bind(ObjectMapper.class).toInstance(new ObjectMapper());
+        }
+        bind(Codec.class).to(CodecImpl.class);
         bind(ChannelHandlerAdapter.class).to(adap);
-        bind(BsonFactory.class).toInstance(bsonFactory);
-        bind(ObjectMapper.class).toInstance(new ObjectMapper(bsonFactory));
         bind(EventLoopGroup.class).annotatedWith(Names.named("boss")).toInstance(new NioEventLoopGroup(bossThreads));
         bind(EventLoopGroup.class).annotatedWith(Names.named("worker")).toInstance(workerThreads == -1 ? new NioEventLoopGroup() : new NioEventLoopGroup(workerThreads));
         bind(ByteBufAllocator.class).toInstance(new PooledByteBufAllocator(true));
         bind(ShutdownHandler.class).asEagerSingleton();
-        bind(Codec.class).to(CodecImpl.class);
     }
 
     static class ShutdownHandler implements Runnable {

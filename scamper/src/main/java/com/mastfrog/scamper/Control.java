@@ -18,28 +18,37 @@
  */
 package com.mastfrog.scamper;
 
-import com.google.inject.Provider;
-import io.netty.channel.ChannelHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.sctp.SctpChannel;
+import com.mastfrog.giulius.Dependencies;
 
 /**
- * Just initializes the channel, getting the adapter from the provider
- * so that, if it's to be created on every request, a new one is 
- * created by Guice.
+ * Object returned by {@link SctpServerAndClientBuilder} which can be used to cleanly
+ * shut down the server or client, shutting down all related event loops and
+ * (ideally) allowing the entire thing to be shut down and if unreferenced, be
+ * garbage collected.
+ * <p>
+ * Returned by {@link SctpServerAndClientBuilder}'s build methods.
  *
  * @author Tim Boudreau
  */
-final class Init extends ChannelInitializer<SctpChannel> {
-    private final Provider<ChannelHandlerAdapter> handler;
+public interface Control<T> {
 
-    public Init(Provider<ChannelHandlerAdapter> handler) {
-        this.handler = handler;
-    }
+    /**
+     * Shut down the server/client/sender
+     */
+    void shutdown();
 
-    @Override
-    protected void initChannel(SctpChannel ch) throws Exception {
-        System.out.println("Init channel " + ch.remoteAddress());
-        ch.pipeline().addLast(handler.get());
-    }
+    /**
+     * Get the object that was created
+     *
+     * @return The object
+     */
+    T get();
+
+    /**
+     * Get the Guice injector if objects are needed from it
+     *
+     * @return A wrapper for the injector
+     */
+    Dependencies getInjector();
+
 }

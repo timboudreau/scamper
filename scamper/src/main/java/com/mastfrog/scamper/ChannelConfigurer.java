@@ -34,6 +34,15 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 /**
+ * Initializes new Bootstrap and ServerBoostrap instances with channel
+ * options.  By default, for servers, sets <code>ChannelOption.SO_BACKLOG</code>
+ * to 1000 and for clients, sets <code>SctpChannelOption.SCTP_NODELAY</code>
+ * to true.
+ * <p>
+ * If you use {@link SctpServerAndClientBuilder}, it will provide its own
+ * implementation of this which will configure things as you have set them in
+ * the builder.  So this class is only likely to be useful if you're not using
+ * that but want to set some options.
  *
  * @author Tim Boudreau
  */
@@ -51,6 +60,11 @@ public class ChannelConfigurer {
         this.handler = handler;
     }
 
+    /**
+     * Initialize a server sctp channel
+     * @param b The bootstrap
+     * @return The bootstrap
+     */
     protected ServerBootstrap init(ServerBootstrap b) {
         Init init = new Init(handler);
         b = b.group(group, worker)
@@ -61,6 +75,11 @@ public class ChannelConfigurer {
         return b;
     }
 
+    /**
+     * Initialize a client sctp channel
+     * @param b The bootstrap
+     * @return The bootstrap
+     */
     protected Bootstrap init(Bootstrap b) {
         Init init = new Init(handler);
         b = b.group(group).channel(NioSctpChannel.class)

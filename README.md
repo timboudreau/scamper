@@ -151,11 +151,33 @@ See the subproject `scamper-date-demo` to build and run this.
 
 [Full source code for the client demo](https://github.com/timboudreau/scamper/blob/master/scamper-date-demo/src/main/java/com/mastfrog/scamper/demo/dates/DateClientDemo.java)
 
+### About SCTP Channels
+
+An SCTP association is like a TCP connection, but may refer to a *list of host/port pairs*
+rather than just one - such connections are called multi-homed, and rely on the
+underlying network to find the connection in that list which is the shortest distance
+from the sender.
+
+Within that association, there are some number of SCTP "channels" available, each
+of which is independent of the others.  This allows multiple messages to be on
+the wire at once, without one message blocking the other from being sent.
+
+By default, when a connection is created, this library will ask the implementation
+how many channels are available, and each new message is sent, round-robin style
+on the next available channel.  If that is not the desired behavior (say, the 
+caller is expecting a response on the same channel), you can
+explicitly pass a channel number to <code>Sender.send()</code>.
+
+On Linux + JDK 8, at the time of this writing, the range of available channels
+through the loopback interface is 0-65535.
+
+
 Status
 ======
 
 This library is fairly embryonic, but is usable at this point for experimenting
 with SCTP.
+
 
 To-Do
 -----
@@ -164,7 +186,8 @@ To-Do
 and add them perhaps - haven't tried it) - should be a first-class feature
  * Expire long-unused connections in `Associations` on a timeout
    * Requires some plumbing to touch a timestamp on each one when it is used
- * Repackage into a single package to hide a few implementation classes (e.g. Init)
+ * Implement compression using a different magic first byte
+ * Implement encryption (key-exchange mechanism TBD)
 
 License
 =======

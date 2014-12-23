@@ -7,7 +7,7 @@ package com.mastfrog.scamper.queries;
 
 import com.mastfrog.giulius.tests.GuiceRunner;
 import com.mastfrog.giulius.tests.TestWith;
-import com.mastfrog.scamper.protocol.ProtocolModule;
+import com.mastfrog.scamper.ProtocolModule;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.junit.runner.RunWith;

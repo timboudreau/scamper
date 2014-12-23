@@ -16,11 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.protocol;
+package com.mastfrog.scamper;
 
 import com.google.inject.AbstractModule;
-import com.mastfrog.scamper.Address;
-import com.mastfrog.settings.Settings;
 import com.mastfrog.util.ConfigurationError;
 import java.security.SecureRandom;
 import java.util.HashSet;
@@ -31,6 +29,8 @@ import java.util.Set;
 
 /**
  * Entry point for bootstrapping an SCTP client or server.
+ * {@link SctpServerAndClientBuilder} is simpler for most cases, but if you want
+ * full control of initialization, you can use this.
  *
  * @author Tim Boudreau
  */
@@ -42,23 +42,18 @@ public class ProtocolModule extends AbstractModule {
     private boolean configureRan;
     private final int bossThreads;
     private final int workerThreads;
+    private final boolean useBson;
 
-//    public ProtocolModule(Settings settings) {
-//        String addr = settings.getString("myAddress");
-//        if (addr == null) {
-//            addr = "127.0.0.1";
-//        }
-//        int port = settings.getInt("port", 8007);
-//        this.address = new Address(addr, port);
     public ProtocolModule() {
-        this(2, -1);
+        this(1, 8, true);
     }
 
-    public ProtocolModule(int bossThreads, int workerThreads) {
-        secureRandom = new SecureRandom();
-        rand = new Random(secureRandom.nextLong());
+    public ProtocolModule(int bossThreads, int workerThreads, boolean useBson) {
         this.bossThreads = bossThreads;
         this.workerThreads = workerThreads;
+        this.useBson = useBson;
+        secureRandom = new SecureRandom();
+        rand = new Random(secureRandom.nextLong());
     }
 
     void addEntry(Entry entry) {
@@ -91,11 +86,15 @@ public class ProtocolModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        // Set the flag so code can't try to bind more handlers after we're
+        // up and running - Guice doens't allow dynamic bindings
         configureRan = true;
-        install(new NettyBootstrapModule(MessageAdapter.class, bossThreads, workerThreads));
-//        bind(Address.class).toInstance(address);
+        // Bootstrap the basics
+        install(new NettyBootstrapModule(MessageDispatcher.class, bossThreads, workerThreads, useBson));
+        // Used for a few things
         bind(Random.class).toInstance(rand);
         bind(SecureRandom.class).toInstance(secureRandom);
+        // Collect all the types registered
         Set<MessageType> allTypes = new HashSet<>();
         MessageHandlerMapping.Builder bldr = new MessageHandlerMapping.Builder();
         for (Entry e : entries) {

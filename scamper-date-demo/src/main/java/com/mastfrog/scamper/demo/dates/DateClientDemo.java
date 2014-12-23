@@ -1,10 +1,10 @@
 package com.mastfrog.scamper.demo.dates;
 
 import com.mastfrog.scamper.Address;
-import com.mastfrog.scamper.protocol.Control;
-import com.mastfrog.scamper.protocol.Message;
-import com.mastfrog.scamper.protocol.Sender;
-import com.mastfrog.scamper.protocol.SctpServerAndClientBuilder;
+import com.mastfrog.scamper.Control;
+import com.mastfrog.scamper.Message;
+import com.mastfrog.scamper.Sender;
+import com.mastfrog.scamper.SctpServerAndClientBuilder;
 import static com.mastfrog.scamper.demo.dates.DateDemo.WHAT_TIME_IS_IT;
 import static com.mastfrog.scamper.demo.dates.DateDemo.THE_TIME_IS;
 import com.mastfrog.util.collections.MapBuilder;

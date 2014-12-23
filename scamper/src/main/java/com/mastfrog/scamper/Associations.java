@@ -19,18 +19,13 @@
 package com.mastfrog.scamper;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.mastfrog.util.thread.AtomicRoundRobin;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerAdapter;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.sctp.SctpChannelOption;
 import io.netty.channel.sctp.nio.NioSctpChannel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
@@ -47,12 +42,14 @@ import java.util.Map;
  * @author Tim Boudreau
  */
 @Singleton
-public class Associations {
+final class Associations {
 
     private final ChannelConfigurer config;
     private final Map<Address, Asso> associations = new HashMap<>();
-    private static final AttributeKey<AtomicRoundRobin> NEXT_IN_STREAM = AttributeKey.valueOf(Associations.class, "instream");
-    private static final AttributeKey<AtomicRoundRobin> NEXT_OUT_STREAM = AttributeKey.valueOf(Associations.class, "outstream");
+    private static final AttributeKey<AtomicRoundRobin> NEXT_IN_STREAM
+            = AttributeKey.valueOf(Associations.class, "instream");
+    private static final AttributeKey<AtomicRoundRobin> NEXT_OUT_STREAM
+            = AttributeKey.valueOf(Associations.class, "outstream");
 
     @Inject
     Associations(final ChannelConfigurer config) {
@@ -140,7 +137,6 @@ public class Associations {
             Bootstrap bootstrap = new Bootstrap();
             config.init(bootstrap);
             //need sync here?
-            System.out.println("CONNECT TO " + address);
             ChannelFuture result = bootstrap.connect(address.host, address.port);
             result.addListener(this);
             return result;
@@ -182,8 +178,11 @@ public class Associations {
         }
 
         @Override
-        public synchronized void operationComplete(ChannelFuture future) throws Exception {
-            NioSctpChannel channel = (NioSctpChannel) future.channel();
+        public void operationComplete(ChannelFuture future) throws Exception {
+            NioSctpChannel channel;
+            synchronized (this) {
+                channel = (NioSctpChannel) future.channel();
+            }
             try {
                 onChannelAcquired(channel);
             } catch (ChannelException ex) {

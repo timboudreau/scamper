@@ -16,22 +16,36 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.protocol;
+package com.mastfrog.scamper;
 
+import com.mastfrog.util.Checks;
 import java.util.Objects;
 
 /**
- * A message to send, comprising the message type and a payload which
- * can be encoded by the bound Codec (by default BSON via Jackson).
+ * A message to send, comprising the message type and a payload which can be
+ * encoded by the bound Codec (by default BSON via Jackson), unless the payload
+ * type is Netty's <code>ByteBuf</code> in which case the raw bytes will be
+ * passed.
+ * <p>
+ * A Message must be associated with an existing message type, so the
+ * constructor is private - create instances by using
+ * <code>MessageType.newMessage(payload)</code>
  *
  * @author Tim Boudreau
  */
 public final class Message<T> {
 
+    /**
+     * The message type. Will not be null.
+     */
     public final MessageType type;
+    /**
+     * The message payload. May be null in the case that no payload is needed.
+     */
     public final T body;
 
     Message(MessageType type, T obj) {
+        Checks.notNull("type", type);
         this.body = obj;
         this.type = type;
     }
@@ -42,28 +56,19 @@ public final class Message<T> {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 41 * hash + Objects.hashCode(this.body);
-        hash = 41 * hash + Objects.hashCode(this.type);
-        return hash;
+        return this.type.hashCode() * 41 + Objects.hashCode(this.body);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
+        if (obj == this) {
+            return true;
+        } else if (obj instanceof Message) {
+            Message other = (Message) obj;
+            return type.equals(other.type) && Objects.equals(body, other.body);
+        } else {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final Message<?> other = (Message<?>) obj;
-        if (!Objects.equals(this.body, other.body)) {
-            return false;
-        }
-        if (!Objects.equals(this.type, other.type)) {
-            return false;
-        }
-        return true;
     }
 
 }

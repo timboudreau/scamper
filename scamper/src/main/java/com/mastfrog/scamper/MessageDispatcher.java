@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.protocol;
+package com.mastfrog.scamper;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -39,7 +39,7 @@ import java.io.IOException;
  */
 @Singleton
 @Sharable
-class MessageAdapter extends ChannelHandlerAdapter {
+class MessageDispatcher extends ChannelHandlerAdapter {
 
     private final Dependencies deps;
 
@@ -47,14 +47,16 @@ class MessageAdapter extends ChannelHandlerAdapter {
     private final MessageTypeRegistry messageTypes;
     private final MessageHandlerMapping mapping;
     private final Sender sender;
+    private final ErrorHandler errors;
 
     @Inject
-    public MessageAdapter(MessageTypeRegistry messageTypes, MessageHandlerMapping mapping, Dependencies deps, Codec mapper, Sender sender) {
+    public MessageDispatcher(MessageTypeRegistry messageTypes, MessageHandlerMapping mapping, Dependencies deps, Codec mapper, Sender sender, ErrorHandler errors) {
         this.deps = deps;
         this.mapper = mapper;
         this.messageTypes = messageTypes;
         this.mapping = mapping;
         this.sender = sender;
+        this.errors = errors;
     }
 
     @Override
@@ -111,8 +113,6 @@ class MessageAdapter extends ChannelHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        // Close the connection when an exception is raised.
-        cause.printStackTrace();
-        ctx.close();
+        errors.onError(ctx, cause);
     }
 }

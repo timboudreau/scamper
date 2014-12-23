@@ -16,12 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.protocol;
+package com.mastfrog.scamper;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.mastfrog.scamper.Address;
-import com.mastfrog.scamper.Associations;
+import com.mastfrog.util.Checks;
 import com.mastfrog.util.Codec;
 import com.sun.nio.sctp.MessageInfo;
 import io.netty.buffer.ByteBuf;
@@ -56,28 +55,42 @@ public final class Sender {
      * Send a message using the passed channel.
      *
      * @param channel A channel
-     * @param result A message
+     * @param message A message
      * @return a future that will be notified when the message write is
      * completed
      * @throws IOException if something goes wrong
      */
-    public ChannelFuture send(Channel channel, final Message<?> result) throws IOException {
-        return send(channel, result, associations.nextOutStream(channel));
+    public ChannelFuture send(Channel channel, final Message<?> message) throws IOException {
+        return send(channel, message, associations.nextOutStream(channel));
     }
 
-    public ChannelFuture send(Channel channel, final Message<?> result, int sctpChannel) throws IOException {
+    /**
+     * Send a message using the passed channel.
+     *
+     * @param channel The channel
+     * @param message A future which will be notified when the message is
+     * flushed to the socket
+     * @param sctpChannel The ordinal of the sctp channel
+     * @return a future that will be notified when the message write is
+     * completed
+     * @throws IOException if something goes wrong
+     */
+    public ChannelFuture send(Channel channel, final Message<?> message, int sctpChannel) throws IOException {
+        Checks.notNull("channel", channel);
+        Checks.notNull("message", message);
+        Checks.nonNegative("sctpChannel", sctpChannel);
         ByteBufAllocator alloc = channel.alloc();
         ByteBuf outbound = alloc.buffer();
-        result.type.writeHeader(outbound);
-        if (result.body != null) {
-            if (result.body instanceof ByteBuf) {
-                result.type.writeHeader(outbound);
-                outbound.writeBytes((ByteBuf) result.body);
+        message.type.writeHeader(outbound);
+        if (message.body != null) {
+            if (message.body instanceof ByteBuf) {
+                message.type.writeHeader(outbound);
+                outbound.writeBytes((ByteBuf) message.body);
             } else {
-                result.type.writeHeader(outbound);
+                message.type.writeHeader(outbound);
                 try (ByteBufOutputStream out = new ByteBufOutputStream(outbound)) {
-                    System.out.println("WRITE BODY " + result.body);
-                    mapper.writeValue(result.body, out);
+                    System.out.println("WRITE BODY " + message.body);
+                    mapper.writeValue(message.body, out);
                 }
             }
         }
@@ -103,12 +116,40 @@ public final class Sender {
         return send(address, message, null);
     }
 
+    /**
+     * Send a message using the passed channel.
+     *
+     * @param address The address
+     * @param message A future which will be notified when the message is
+     * flushed to the socket
+     * @param l A ChannelFutureListener to be notified when the mesage is
+     * flushed (remember to check <code>ChannelFuture.getCause()</code> to
+     * check for failure)
+     * @return a future that will be notified when the message write is
+     * completed
+     */
     public ChannelFuture send(Address address, final Message<?> message, final ChannelFutureListener l) {
         int sctpChannel = associations.nextOutStream(address);
         return send(address, message, sctpChannel, l);
     }
 
+    /**
+     * Send a message using the passed channel.
+     *
+     * @param address The address
+     * @param message A future which will be notified when the message is
+     * flushed to the socket
+     * @param sctpChannel The ordinal of the sctp channel
+     * @param l A ChannelFutureListener to be notified when the mesage is
+     * flushed (remember to check <code>ChannelFuture.getCause()</code> to
+     * check for failure)
+     * @return a future that will be notified when the message write is
+     * completed
+     */
     public ChannelFuture send(Address address, final Message<?> message, final int sctpChannel, final ChannelFutureListener l) {
+        Checks.notNull("address", address);
+        Checks.notNull("message", message);
+        Checks.nonNegative("sctpChannel", sctpChannel);
         return associations.connect(address).addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {

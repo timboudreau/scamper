@@ -16,14 +16,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.protocol;
+package com.mastfrog.scamper;
 
 import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Handles inbound messages, and can optionally reply with a message.
  * Annotate your implementation with &#064;Singleton if you do not want one
- * created for each request. You can also ask for an instance of Sender to
+ * created for each message. You can also ask for an instance of Sender to
  * be created 
  *
  * @author Tim Boudreau

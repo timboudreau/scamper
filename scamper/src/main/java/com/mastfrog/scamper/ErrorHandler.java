@@ -16,37 +16,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.protocol;
+package com.mastfrog.scamper;
 
-import com.mastfrog.giulius.Dependencies;
+import com.google.inject.ImplementedBy;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
- * Object returned by SctpServerAndClientBuilder which can be used to cleanly
- * shut down the server or client, shutting down all related event loops and
- * (ideally) allowing the entire thing to be shut down and if unreferenced, be
- * garbage collected.
+ * This class is passed errors thrown during message processing.  The
+ * default implementation simply prints a stack trace and closes the
+ * associated channel.
  *
  * @author Tim Boudreau
  */
-public interface Control<T> {
-
+@ImplementedBy(DefaultErrorHandler.class)
+public interface ErrorHandler {
     /**
-     * Shut down the server/client/sender
+     * Called when an error occurs
+     * @param ctx The channel context
+     * @param t The error
      */
-    void shutdown();
-
-    /**
-     * Get the object that was created
-     *
-     * @return The object
-     */
-    T get();
-
-    /**
-     * Get the Guice injector if objects are needed from it
-     *
-     * @return A wrapper for the injector
-     */
-    Dependencies getInjector();
-
+    void onError(ChannelHandlerContext ctx, Throwable t);
 }

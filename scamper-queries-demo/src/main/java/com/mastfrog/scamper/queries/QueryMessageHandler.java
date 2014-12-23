@@ -1,9 +1,8 @@
 package com.mastfrog.scamper.queries;
 
-import com.mastfrog.scamper.protocol.MessageHandler;
 import com.mastfrog.scamper.Address;
-import com.mastfrog.scamper.protocol.Message;
-import com.mastfrog.scamper.queries.Query;
+import com.mastfrog.scamper.Message;
+import com.mastfrog.scamper.MessageHandler;
 import io.netty.channel.ChannelHandlerContext;
 
 /**

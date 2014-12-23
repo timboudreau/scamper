@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Scamper API</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>Scamper API</h1>
+        <p>
+            An API for writing SCTP clients and servers.
+        </p>
+        <p>
+            Examples and details are available on the <a href="https://github.com/timboudreau/scamper">homepage of the GitHub project</a>.
+            For use from Maven, see the <a href="http://timboudreau.com/builds">instructions here</a>.
+        </p>
+        <p>
+            This package uses <a href="http://netty.io">Netty 5</a> and
+            <a href="https://github.com/google/guice">Google Guice</a> under the
+            hood.
+        </p>
+        <p>
+            It is not necessary to know much about Guice to use this library, but
+            it is handy for binding configuration your objects will need.
+            Your <a href='MessageHandler.html'>MessageHandler</a> implementations
+            will need a constructor annotated with <code>&#064;Inject</code>
+            or a no-argument constructor.F
+        </p>
+        <p>
+            The main entry point is <a href='SctpServerAndClientBuilder.html'>SctpServerAndClientBuilder</a>;
+            to use, create some <a href='MessageType.html'>MessageType</a>s and pass them to the builder's
+            <code>bind()</code> method along with your implementation of 
+            <a href='MessageHandler.html'>MessageHandler</a> which will receive and process
+            messages of those types.  Then use one of the <code>build()</code> methods
+            to get a server or client you can <code>start()</code>.
+        </p>
+    </body>
+</html>

@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.protocol;
+package com.mastfrog.scamper;
 
-import static com.mastfrog.scamper.protocol.MessageTypeRegistry.MAGIC;
+import static com.mastfrog.scamper.MessageTypeRegistry.MAGIC;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -31,7 +31,7 @@ import io.netty.buffer.ByteBuf;
  *
  * @author Tim Boudreau
  */
-public class MessageType {
+public final class MessageType {
 
     private final String name;
     private final byte byteOne;
@@ -77,6 +77,11 @@ public class MessageType {
         return byteOne == one && byteTwo == two;
     }
 
+    /**
+     * Returns true if this MessageType is not a registered one - it
+     * contains a byte sequence the application doesn't recognize.
+     * @return true if this message is unknown
+     */
     public boolean isUnknown() {
         return unknown;
     }
@@ -85,6 +90,11 @@ public class MessageType {
         return name + " (" + byteOne + "," + byteTwo + ")";
     }
 
+    /**
+     * Write this mesage type into a ByteBuf
+     * @param buf The buffeer
+     * @return the buffer
+     */
     public ByteBuf writeHeader(ByteBuf buf) {
         return buf.writeByte(MAGIC).writeByte(byteOne).writeByte(byteTwo);
     }

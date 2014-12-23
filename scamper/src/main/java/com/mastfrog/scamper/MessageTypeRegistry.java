@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.protocol;
+package com.mastfrog.scamper;
 
 import com.google.common.collect.ImmutableSet;
 import io.netty.buffer.ByteBuf;
@@ -26,7 +26,7 @@ import java.util.Set;
  *
  * @author Tim Boudreau
  */
-class MessageTypeRegistry {
+final class MessageTypeRegistry {
 
     private final Set<MessageType> types;
     public static final byte MAGIC = 123;
