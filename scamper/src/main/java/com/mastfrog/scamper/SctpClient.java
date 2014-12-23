@@ -28,11 +28,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 /**
- * Sends one message when a connection is open and echoes back any received data
- * to the server over SCTP connection.
- *
- * Simply put, the echo client initiates the ping-pong traffic between the echo
- * client and server by sending the first message to the server.
+ * An SCTP client which will send and receive SCTP messages.
  */
 public final class SctpClient {
 

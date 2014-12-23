@@ -28,7 +28,8 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 /**
- * Echoes back any received data from a SCTP client.
+ * An SCTP server which will listen on the specified port and decode and pass
+ * received messages to the bound MessageHandlers.
  */
 public final class SctpServer {
 
