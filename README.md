@@ -172,6 +172,30 @@ On Linux + JDK 8, at the time of this writing, the range of available channels
 through the loopback interface is 0-65535.
 
 
+### About Netty's ChannelFuture
+
+Netty is asynchronous.  That means that network operations are not completed in
+the thread they are invoked in, and notifications of their success or failure
+is called asynchronously when the socket is flushed or the operation fails.
+
+Calls that perform network operations return a 
+<a href="http://netty.io/5.0/api/io/netty/channel/ChannelFuture.html">ChannelFuture</a>
+you can listen on to check the status of the operation,
+or allow you to pass a 
+<a href="http://netty.io/5.0/api/io/netty/channel/ChannelFutureListener.html">ChannelFutureListener</a>
+which will be notified when the operation is completed.
+
+It is important to check 
+<a href="http://netty.io/5.0/api/io/netty/util/concurrent/Future.html#cause()">ChannelFuture.cause()</a>
+to see that the operation actually succeeded.  If it is null, the operation did
+succeed.
+
+You can also implement and bind <a href="ErrorHandler.html">ErrorHandler</a> to
+receive uncaught exceptions while processing messages (which can legitimately
+happen if, say, a client sends bogus data).  It is always preferable to use a
+listener on a specific operation, since that listener is likely to have enough
+context to do something more intelligent than just log an error.
+
 Status
 ======
 
