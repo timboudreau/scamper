@@ -101,9 +101,11 @@ class MessageDispatcher extends ChannelHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         SctpMessage sctpMsg = (SctpMessage) msg;
         ByteBuf buf = sctpMsg.content();
+        // PENDING: Give MessageHandler a way to be handed the ChannelFuture from the send,
+        // and or receive a reply
         Message<?> result = handleMessage(buf, ctx);
         if (result != null) {
-            sender.send(ctx.channel(), result, 0);
+            sender.send(ctx.channel(), result, sctpMsg.streamIdentifier());
         }
     }
 
