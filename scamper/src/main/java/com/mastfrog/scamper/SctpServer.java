@@ -41,6 +41,15 @@ public final class SctpServer {
         this.config = config;
     }
 
+    /**
+     * Start the server, returning a ChannelFuture which can be waited on to
+     * keep the server running (the returned future is the server socket's
+     * channel's <code>closeFuture()</code> - call its <code>sync()</code>
+     * method to block the current thread until the connection is closed.
+     *
+     * @return The close future for this server's SCTP server socket
+     * @throws InterruptedException
+     */
     public ChannelFuture start() throws InterruptedException {
         // Configure the server.
         ServerBootstrap b = new ServerBootstrap();

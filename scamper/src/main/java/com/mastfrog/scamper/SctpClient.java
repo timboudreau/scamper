@@ -46,6 +46,16 @@ public final class SctpClient {
         this.port = port;
         this.configurer = configurer;
     }
+    /**
+     * Start the client, returning a ChannelFuture which can be waited
+     * on to keep the client running (the returned future is the 
+     * client SCTP socket's channel's <code>closeFuture()</code> - call
+     * its <code>sync()</code> method to block the current thread until
+     * the connection is closed.
+     * 
+     * @return The close future for this client's connection
+     * @throws InterruptedException 
+     */
 
     public ChannelFuture start() throws InterruptedException {
         // Configure the client.
