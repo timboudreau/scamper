@@ -225,6 +225,7 @@ To-Do
 
  * Support for multi-homing (right now you could grab the Java SCTP connection after the fact
 and add them perhaps - haven't tried it) - should be a first-class feature
+   * Implement by extending the Address class to contain multiple `InetSocketAddress`es
  * Expire long-unused connections in `Associations` on a timeout
    * Requires some plumbing to touch a timestamp on each one when it is used
  * Implement compression using a different magic first byte
