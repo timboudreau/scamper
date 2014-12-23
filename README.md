@@ -7,16 +7,23 @@ transport, using [Netty](http://netty.io) under the hood.
 
 Servers and clients can register `MessageType`s and `MessageHandler`s that
 receive messages of those types.  Each message sent or received by this
-library has a 3-byte header identifying the message.  The remaining payload
-of a message is up to you.  You define message types and write handlers
-that receive those messages, or use a `Sender` to send them elsewhere.
+library has a 3-byte header identifying the message type, which is used to
+route them to the handler you provide for that message type.
 
-For convenience, by default message payloads
+The remaining payload of a message is up to you.  You define message types 
+and write handlers that receive those messages, or use a `Sender` to send 
+them elsewhere.
+
+By default message payloads
 are encoded using [BSON](http://en.wikipedia.org/wiki/BSON) using 
-[BSON4Jackson](https://github.com/michel-kraemer/bson4jackson).  If you want
-to write your own payloads, simply make the payload a
+[BSON4Jackson](https://github.com/michel-kraemer/bson4jackson).  So sending
+messages is as easy as passing a Java object to a `Sender`.
+
+If you want to write your own payloads, simply make the payload a
 [ByteBuf](http://netty.io/5.0/api/io/netty/buffer/ByteBuf.html) and
 no encoding or decoding will be done.
+
+For debugging, BSON can be turned off and JSON will be used instead.
 
 Javadoc is [available here](http://timboudreau.com/builds/job/scamper/lastSuccessfulBuild/artifact/scamper/target/apidocs/index.html)
 and the library is available via Maven [as described here](http://timboudreau.com/builds/).
