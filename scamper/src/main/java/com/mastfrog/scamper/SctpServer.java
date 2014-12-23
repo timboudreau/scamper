@@ -48,7 +48,8 @@ public final class SctpServer {
      * method to block the current thread until the connection is closed.
      *
      * @return The close future for this server's SCTP server socket
-     * @throws InterruptedException
+     * @throws InterruptedException If the socket binding process is
+     * interrupted, say be VM shutdown
      */
     public ChannelFuture start() throws InterruptedException {
         // Configure the server.
