@@ -2,7 +2,8 @@ Scamper
 =======
 
 A toolkit to make it easy to write Java servers and clients that use 
-[SCTP](http://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol) as their
+[SCTP](http://en.wikipedia.org/wiki/Stream_Control_Transmission_Protocol)
+instead of TCP as their network
 transport, using [Netty](http://netty.io) under the hood.
 
 Servers and clients can register `MessageType`s and `MessageHandler`s that
