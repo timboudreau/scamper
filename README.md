@@ -122,7 +122,16 @@ Writing a Client
 ----------------
 
 `Sender` is a simple class which maintains a set of connections to clients;
-you simply call it with a message and the address you want to send it to.
+you simply call it with a message and the address you want to send it to.  All
+you need is a `MessageType` and an object that Jackson can serialize.
+
+```java
+static final MessageType WHAT_TIME_IS_IT = new MessageType("dateQuery", 1, 1);
+...
+Message<?> message = MY_MESSAGE_TYPE.newMessage(new MyObject());
+sender.send(new Address("127.0.0.1", 8007), message);
+```
+
 A client for the server above looks like:
 
 ```java
