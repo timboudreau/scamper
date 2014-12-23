@@ -75,6 +75,7 @@ public final class Sender {
      * completed
      * @throws IOException if something goes wrong
      */
+    @SuppressWarnings("unchecked")
     public ChannelFuture send(Channel channel, final Message<?> message, int sctpChannel) throws IOException {
         Checks.notNull("channel", channel);
         Checks.notNull("message", message);

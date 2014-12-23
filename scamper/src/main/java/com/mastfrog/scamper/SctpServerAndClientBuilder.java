@@ -255,6 +255,9 @@ public class SctpServerAndClientBuilder {
         }
     }
 
+    private static final TypeLiteral<Set<OptionEntry<?>>> OPTION_ENTRY_TYPE = new TypeLiteral<Set<OptionEntry<?>>>() {
+    };
+
     static final class Mod extends AbstractModule {
 
         private final Set<OptionEntry<?>> bothOptions;
@@ -271,11 +274,9 @@ public class SctpServerAndClientBuilder {
 
         @Override
         protected void configure() {
-            TypeLiteral<Set<OptionEntry<?>>> e = new TypeLiteral<Set<OptionEntry<?>>>() {
-            };
-            bind(e).annotatedWith(Names.named("both")).toInstance(bothOptions);
-            bind(e).annotatedWith(Names.named("server")).toInstance(clientOptions);
-            bind(e).annotatedWith(Names.named("client")).toInstance(serverOptions);
+            bind(OPTION_ENTRY_TYPE).annotatedWith(Names.named("both")).toInstance(bothOptions);
+            bind(OPTION_ENTRY_TYPE).annotatedWith(Names.named("server")).toInstance(clientOptions);
+            bind(OPTION_ENTRY_TYPE).annotatedWith(Names.named("client")).toInstance(serverOptions);
             bind(ChannelConfigurer.class).to(Config.class);
             if (errors != null) {
                 bind(ErrorHandler.class).toInstance(errors);
@@ -355,15 +356,6 @@ public class SctpServerAndClientBuilder {
         return b.build();
     }
 
-    private boolean hasOption(ChannelOption<?> opt) {
-        for (OptionEntry<?> e : this.options) {
-            if (e.option.equals(opt)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     /**
      * Map a message type to a handler which will receive messages of that type
      *
@@ -378,7 +370,7 @@ public class SctpServerAndClientBuilder {
             throw new ClassCastException("Not a subclass of MessageHandler: " + handlerType);
         }
         for (ProtocolModule.Entry entry : bindings) {
-            if (entry.type.equals(type)) {
+            if (entry.message.equals(type)) {
                 throw new ConfigurationError(entry.type + " was already "
                         + "registered for " + type);
             }
@@ -428,10 +420,9 @@ public class SctpServerAndClientBuilder {
 
     /**
      * Set a channel option for NioSctpChannels created for client connections
-     * (Netty's Bootstrap) but not to be used for server connections. Use
-     * in the case you will create a server that will also make client
-     * connections to other servers if you want independent settings for server
-     * and client.
+     * (Netty's Bootstrap) but not to be used for server connections. Use in the
+     * case you will create a server that will also make client connections to
+     * other servers if you want independent settings for server and client.
      *
      * @param <T> The option type
      * @param option The option

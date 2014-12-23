@@ -75,7 +75,7 @@ public class ProtocolModule extends AbstractModule {
             throw new IllegalStateException("Cannot bind after injector creation");
         }
         for (Entry entry : entries) {
-            if (entry.type.equals(type)) {
+            if (entry.message.equals(type)) {
                 throw new ConfigurationError(entry.type + " was already "
                         + "registered for " + type);
             }

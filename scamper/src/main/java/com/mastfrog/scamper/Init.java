@@ -39,7 +39,6 @@ final class Init extends ChannelInitializer<SctpChannel> {
 
     @Override
     protected void initChannel(SctpChannel ch) throws Exception {
-        System.out.println("Init channel " + ch.remoteAddress());
         ch.pipeline().addLast(handler.get());
     }
 }

@@ -27,8 +27,15 @@ no encoding or decoding will be done.
 For debugging, BSON can be turned off and JSON will be used instead.
 
 Javadoc is [available here](http://timboudreau.com/builds/job/scamper/lastSuccessfulBuild/artifact/scamper/target/apidocs/index.html)
-and the library is available via Maven [as described here](http://timboudreau.com/builds/).
+and the library is available via Maven [as described here](http://timboudreau.com/builds/):
 
+```xml
+    <dependency>
+        <groupId>com.mastfrog</groupId>
+        <artifactId>scamper</artifactId>
+        <version>1.1-dev</version>
+    </dependency>
+```
 
 What It Does
 ------------

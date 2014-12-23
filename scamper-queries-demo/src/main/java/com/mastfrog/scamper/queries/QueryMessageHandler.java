@@ -21,5 +21,4 @@ public class QueryMessageHandler extends MessageHandler<Query, Query> {
     public Message<Query> onMessage(Message<Query> data, ChannelHandlerContext ctx) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
 }

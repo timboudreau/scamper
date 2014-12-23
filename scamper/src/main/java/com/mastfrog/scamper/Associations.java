@@ -138,6 +138,7 @@ final class Associations {
             config.init(bootstrap);
             //need sync here?
             ChannelFuture result = bootstrap.connect(address.host, address.port);
+            future = result;
             result.addListener(this);
             return result;
         }
@@ -160,10 +161,12 @@ final class Associations {
         }
 
         void onChannelAcquired(NioSctpChannel channel) {
-            inStreams = new AtomicRoundRobin(channel.config().getInitMaxStreams().maxInStreams());
-            outStreams = new AtomicRoundRobin(channel.config().getInitMaxStreams().maxOutStreams());
-            channel.attr(NEXT_IN_STREAM).set(inStreams);
-            channel.attr(NEXT_OUT_STREAM).set(outStreams);
+            synchronized (this) {
+                inStreams = new AtomicRoundRobin(channel.config().getInitMaxStreams().maxInStreams());
+                outStreams = new AtomicRoundRobin(channel.config().getInitMaxStreams().maxOutStreams());
+                channel.attr(NEXT_IN_STREAM).set(inStreams);
+                channel.attr(NEXT_OUT_STREAM).set(outStreams);
+            }
             channel.closeFuture().addListener(new ChannelFutureListener() {
 
                 @Override
