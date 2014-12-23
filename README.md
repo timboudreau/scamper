@@ -214,6 +214,18 @@ happen if, say, a client sends bogus data).  It is always preferable to use a
 listener on a specific operation, since that listener is likely to have enough
 context to do something more intelligent than just log an error.
 
+
+### Memory Usage
+
+By default, uses Netty's [PooledByteBufAllocator](http://netty.io/5.0/api/io/netty/buffer/PooledByteBufAllocator.html).
+To change this, pass a different allocator to the builder's <code>option()</code> method for
+<code>ChannelOption.ALLOCATOR</code>.  This uses a pool of off-heap direct memory storage
+with reference-counting to recycle memory - resulting in a server that, once it reaches
+a steady state, should allocate little or no more memory at runtime.
+
+If you use Netty's ByteBufs directly, you may need to ensure you call <code>release()</code>
+on them when you're done with them, as they are reference-counted.
+
 Status
 ======
 
