@@ -35,6 +35,7 @@ import com.mastfrog.util.Checks;
 import com.mastfrog.util.ConfigurationError;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -293,9 +294,10 @@ public class SctpServerAndClientBuilder {
                     Provider<ChannelHandlerAdapter> handler,
                     @Named("both") Set<OptionEntry<?>> bothOptions,
                     @Named("server") Set<OptionEntry<?>> severOptions,
-                    @Named("client") Set<OptionEntry<?>> clientOptions
+                    @Named("client") Set<OptionEntry<?>> clientOptions,
+                    ByteBufAllocator alloc
             ) {
-                super(boss, worker, handler);
+                super(boss, worker, handler, alloc);
                 this.bothOptions = ImmutableSet.copyOf(bothOptions);
                 this.serverOptions = ImmutableSet.copyOf(severOptions);
                 this.clientOptions = ImmutableSet.copyOf(clientOptions);
@@ -304,16 +306,19 @@ public class SctpServerAndClientBuilder {
             @Override
             public ServerBootstrap init(ServerBootstrap b) {
                 Init init = new Init(handler);
+                // Set default options - the builder can override them
                 b = b.group(group, worker)
                         .channel(NioSctpServerChannel.class)
-                        .option(ChannelOption.SO_BACKLOG, 1000);
+                        .option(SctpChannelOption.SCTP_NODELAY, true)
+                        .option(ChannelOption.SO_BACKLOG, 1000)
+                        .option(ChannelOption.ALLOCATOR, alloc);
                 for (OptionEntry<?> entry : bothOptions) {
                     b = entry.apply(b);
                 }
                 for (OptionEntry<?> entry : serverOptions) {
                     b = entry.apply(b);
                 }
-                b.handler(new LoggingHandler(LogLevel.INFO))
+                b = b.handler(new LoggingHandler(LogLevel.INFO))
                         .childHandler(init);
                 return b;
             }
@@ -321,8 +326,10 @@ public class SctpServerAndClientBuilder {
             @Override
             public Bootstrap init(Bootstrap b) {
                 Init init = new Init(handler);
+                // Set default options - the builder can override them
                 b = b.group(group).channel(NioSctpChannel.class)
-                        .option(SctpChannelOption.SCTP_NODELAY, true);
+                        .option(SctpChannelOption.SCTP_NODELAY, true)
+                        .option(ChannelOption.ALLOCATOR, alloc);
                 for (OptionEntry<?> entry : bothOptions) {
                     b = entry.apply(b);
                 }

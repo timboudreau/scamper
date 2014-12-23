@@ -18,10 +18,12 @@
  */
 package com.mastfrog.scamper;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.mastfrog.giulius.Dependencies;
 import com.mastfrog.util.Codec;
+import com.mastfrog.util.Streams;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -32,8 +34,8 @@ import io.netty.channel.sctp.SctpMessage;
 import java.io.IOException;
 
 /**
- * Receives reads and writes of SCTP messages and routes to the 
- * appropriate MessageHandlers.
+ * Receives reads and writes of SCTP messages and routes to the appropriate
+ * MessageHandlers.
  *
  * @author Tim Boudreau
  */
@@ -74,17 +76,22 @@ class MessageDispatcher extends ChannelHandlerAdapter {
     private <T, M> Message<T> handleMessage(MessageType messageType, MessageHandler<T, M> handler, ByteBuf buf, ChannelHandlerContext ctx) throws IOException {
         Class<M> type = handler.messageType();
         Message<M> theMessage;
+        buf.readerIndex(MessageType.HEADER_SIZE);
         if (type == ByteBuf.class) {
             theMessage = messageType.newMessage(type.cast(buf));
         } else if (type == Void.class) {
             theMessage = messageType.newMessage(null);
         } else {
-            int bytes = buf.readableBytes();
-            System.out.println("TO READ: " + bytes);
             try (ByteBufInputStream in = new ByteBufInputStream(buf)) {
                 M arg = mapper.readValue(in, type);
-                System.out.println("Decoded " + arg + " for " + type);
                 theMessage = messageType.newMessage(arg);
+            } catch (JsonParseException ex) {
+                buf.readerIndex(MessageType.HEADER_SIZE);
+                try (ByteBufInputStream in2 = new ByteBufInputStream(buf)) {
+                    throw new IOException("Invalid JSON: " + Streams.readString(in2, 256), ex);
+                }
+            } finally {
+                buf.discardReadBytes();
             }
         }
         return handler.onMessage(theMessage, ctx);

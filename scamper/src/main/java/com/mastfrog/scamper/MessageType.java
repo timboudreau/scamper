@@ -37,6 +37,7 @@ public final class MessageType {
     private final byte byteOne;
     private final byte byteTwo;
     private boolean unknown;
+    public static int HEADER_SIZE = 3;
 
     public MessageType(String name, int byteOne, int byteTwo) {
         this(name, byteOne, byteTwo, false);

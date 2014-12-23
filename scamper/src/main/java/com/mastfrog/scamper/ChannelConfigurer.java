@@ -24,6 +24,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -52,12 +53,14 @@ public class ChannelConfigurer {
     protected final EventLoopGroup group;
     protected final EventLoopGroup worker;
     protected final Provider<ChannelHandlerAdapter> handler;
+    protected final ByteBufAllocator alloc;
 
     @Inject
-    protected ChannelConfigurer(@Named(value = "boss") EventLoopGroup boss, @Named("worker") EventLoopGroup worker, Provider<ChannelHandlerAdapter> handler) {
+    protected ChannelConfigurer(@Named(value = "boss") EventLoopGroup boss, @Named("worker") EventLoopGroup worker, Provider<ChannelHandlerAdapter> handler, ByteBufAllocator alloc) {
         this.group = boss;
         this.worker = worker;
         this.handler = handler;
+        this.alloc = alloc;
     }
 
     /**
@@ -70,6 +73,7 @@ public class ChannelConfigurer {
         b = b.group(group, worker)
                 .channel(NioSctpServerChannel.class)
                 .option(ChannelOption.SO_BACKLOG, 1000)
+                .option(ChannelOption.ALLOCATOR, alloc)
                 .handler(new LoggingHandler(LogLevel.INFO))
                 .childHandler(init);
         return b;
@@ -84,6 +88,7 @@ public class ChannelConfigurer {
         Init init = new Init(handler);
         b = b.group(group).channel(NioSctpChannel.class)
                 .option(SctpChannelOption.SCTP_NODELAY, true)
+                .option(ChannelOption.ALLOCATOR, alloc)
                 .handler(init);
         return b;
     }
