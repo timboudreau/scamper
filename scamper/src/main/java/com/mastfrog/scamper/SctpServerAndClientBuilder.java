@@ -139,7 +139,15 @@ public class SctpServerAndClientBuilder {
         built = true;
     }
 
-    private Dependencies buildInjector(boolean forServer, String... cmdlineArgs) throws IOException {
+    /**
+     * Build a wrapper for the Guice injector, which can be used to instantiate
+     * server, client, sender or other objects.
+     *
+     * @param cmdlineArgs The command line arguments to parse
+     * @return The injector
+     * @throws IOException If something goes wrong
+     */
+    public Dependencies buildInjector(String... cmdlineArgs) throws IOException {
         checkBuilt();
         Settings settings = settings(cmdlineArgs);
         DependenciesBuilder builder = deps(settings);
@@ -157,7 +165,7 @@ public class SctpServerAndClientBuilder {
      * @throws IOException if something goes wrong
      */
     public Control<SctpServer> buildServer(String... cmdlineArgs) throws IOException {
-        Dependencies deps = buildInjector(true, cmdlineArgs);
+        Dependencies deps = buildInjector(cmdlineArgs);
         return new ControlImpl<SctpServer>(deps.getInstance(SctpServer.class), deps);
     }
 
@@ -171,7 +179,7 @@ public class SctpServerAndClientBuilder {
      * @throws IOException if something goes wrong
      */
     public Control<SctpClient> buildClient(String... cmdlineArgs) throws IOException {
-        Dependencies deps = buildInjector(false, cmdlineArgs);
+        Dependencies deps = buildInjector(cmdlineArgs);
         return new ControlImpl<SctpClient>(deps.getInstance(SctpClient.class), deps);
     }
 
@@ -185,7 +193,7 @@ public class SctpServerAndClientBuilder {
      * @throws IOException if something goes wrong
      */
     public Control<Sender> buildSender(String... cmdlineArgs) throws IOException {
-        Dependencies deps = buildInjector(false, cmdlineArgs);
+        Dependencies deps = buildInjector(cmdlineArgs);
         return new ControlImpl<Sender>(deps.getInstance(Sender.class), deps);
     }
 
@@ -208,11 +216,10 @@ public class SctpServerAndClientBuilder {
     }
 
     /**
-     * Set the error handler that will receive uncaught exceptions in
-     * message processing.  If not set, the default implementation simply
-     * prints a stack trace and closes the channel (which may cause the
-     * application to exit).
-     * 
+     * Set the error handler that will receive uncaught exceptions in message
+     * processing. If not set, the default implementation simply prints a stack
+     * trace and closes the channel (which may cause the application to exit).
+     *
      * @param errors The error handler
      * @return This
      */
@@ -221,7 +228,7 @@ public class SctpServerAndClientBuilder {
         return this;
     }
 
-    private static class ControlImpl<T> implements Control<T> {
+    private static class ControlImpl<T> extends Control<T> {
 
         private final T object;
         private final Dependencies deps;
@@ -294,6 +301,7 @@ public class SctpServerAndClientBuilder {
                 this.clientOptions = ImmutableSet.copyOf(clientOptions);
             }
 
+            @Override
             public ServerBootstrap init(ServerBootstrap b) {
                 Init init = new Init(handler);
                 b = b.group(group, worker)
@@ -310,6 +318,7 @@ public class SctpServerAndClientBuilder {
                 return b;
             }
 
+            @Override
             public Bootstrap init(Bootstrap b) {
                 Init init = new Init(handler);
                 b = b.group(group).channel(NioSctpChannel.class)
@@ -372,8 +381,8 @@ public class SctpServerAndClientBuilder {
     }
 
     /**
-     * Set a channel option for the NioSctpChannel to be used on all
-     * client and server connections.
+     * Set a channel option for the NioSctpChannel to be used on all client and
+     * server connections.
      *
      * @param <T> The option type
      * @param option The option

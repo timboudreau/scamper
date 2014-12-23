@@ -30,25 +30,25 @@ import com.mastfrog.giulius.Dependencies;
  *
  * @author Tim Boudreau
  */
-public interface Control<T> {
+public abstract class Control<T> {
 
     /**
      * Shut down the server/client/sender
      */
-    void shutdown();
+    public abstract void shutdown();
 
     /**
      * Get the object that was created
      *
      * @return The object
      */
-    T get();
+    public abstract T get();
 
     /**
      * Get the Guice injector if objects are needed from it
      *
      * @return A wrapper for the injector
      */
-    Dependencies getInjector();
+    public abstract Dependencies getInjector();
 
 }
