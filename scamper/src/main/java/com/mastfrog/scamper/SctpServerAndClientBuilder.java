@@ -427,8 +427,8 @@ public class SctpServerAndClientBuilder {
     }
 
     /**
-     * Set a channel option for NioSctpChannels created for server connections
-     * (Netty's ServerBootstrap) but not to be used for client connections. Use
+     * Set a channel option for NioSctpChannels created for client connections
+     * (Netty's Bootstrap) but not to be used for server connections. Use
      * in the case you will create a server that will also make client
      * connections to other servers if you want independent settings for server
      * and client.
