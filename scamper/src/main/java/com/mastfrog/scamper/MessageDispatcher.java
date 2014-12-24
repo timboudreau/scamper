@@ -18,6 +18,7 @@
  */
 package com.mastfrog.scamper;
 
+import com.mastfrog.scamper.codec.MessageCodec;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -32,6 +33,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.sctp.SctpMessage;
 import java.io.IOException;
+import java.net.SocketAddress;
 
 /**
  * Receives reads and writes of SCTP messages and routes to the appropriate
@@ -46,37 +48,36 @@ class MessageDispatcher extends ChannelHandlerAdapter {
     private final Dependencies deps;
 
     private final Codec mapper;
-    private final MessageTypeRegistry messageTypes;
     private final MessageHandlerMapping mapping;
     private final Sender sender;
     private final ErrorHandler errors;
+    private final MessageCodec codec;
 
     @Inject
-    public MessageDispatcher(MessageTypeRegistry messageTypes, MessageHandlerMapping mapping, Dependencies deps, Codec mapper, Sender sender, ErrorHandler errors) {
+    public MessageDispatcher(MessageHandlerMapping mapping, Dependencies deps, Codec mapper, Sender sender, ErrorHandler errors, MessageCodec codec) {
         this.deps = deps;
         this.mapper = mapper;
-        this.messageTypes = messageTypes;
         this.mapping = mapping;
         this.sender = sender;
         this.errors = errors;
+        this.codec = codec;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("ChannelActive " + ctx.channel().remoteAddress());
-        super.channelActive(ctx); //To change body of generated methods, choose Tools | Templates.
+        codec.onChannelActive(ctx);
     }
 
-    private Message<?> handleMessage(ByteBuf buf, ChannelHandlerContext ctx) throws IOException {
-        MessageType messageType = messageTypes.forByteBuf(buf);
+    private Message<?> handleMessage(MessageTypeAndBuffer typeAndPayload, ChannelHandlerContext ctx) throws IOException {
+        MessageType messageType = typeAndPayload.messageType;
         MessageHandler<?, ?> result = deps.getInstance(mapping.get(messageType));
-        return handleMessage(messageType, result, buf, ctx);
+        return handleMessage(messageType, result, typeAndPayload.buf, ctx);
     }
 
     private <T, M> Message<T> handleMessage(MessageType messageType, MessageHandler<T, M> handler, ByteBuf buf, ChannelHandlerContext ctx) throws IOException {
         Class<M> type = handler.messageType();
         Message<M> theMessage;
-        buf.readerIndex(MessageType.HEADER_SIZE);
         if (type == ByteBuf.class) {
             theMessage = messageType.newMessage(type.cast(buf));
         } else if (type == Void.class) {
@@ -84,9 +85,9 @@ class MessageDispatcher extends ChannelHandlerAdapter {
         } else {
             try (ByteBufInputStream in = new ByteBufInputStream(buf)) {
                 M arg = mapper.readValue(in, type);
+                System.out.println("GOT " + arg);
                 theMessage = messageType.newMessage(arg);
             } catch (JsonParseException ex) {
-                buf.readerIndex(MessageType.HEADER_SIZE);
                 try (ByteBufInputStream in2 = new ByteBufInputStream(buf)) {
                     throw new IOException("Invalid JSON: " + Streams.readString(in2, 256), ex);
                 }
@@ -99,11 +100,15 @@ class MessageDispatcher extends ChannelHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        System.out.println("ChannelRead ");
         SctpMessage sctpMsg = (SctpMessage) msg;
-        ByteBuf buf = sctpMsg.content();
+        MessageTypeAndBuffer decoded = codec.decode(sctpMsg, ctx);
+        
+        System.out.println("DECODED " + decoded.buf);
+        
         // PENDING: Give MessageHandler a way to be handed the ChannelFuture from the send,
         // and or receive a reply
-        Message<?> result = handleMessage(buf, ctx);
+        Message<?> result = handleMessage(decoded, ctx);
         if (result != null) {
             sender.send(ctx.channel(), result, sctpMsg.streamIdentifier());
         }
@@ -111,7 +116,7 @@ class MessageDispatcher extends ChannelHandlerAdapter {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        System.out.println("Channel write " + msg.getClass().getName() + " to " + ctx.channel().remoteAddress());
+        System.out.println("Channel write " + msg + " to " + ctx.channel().remoteAddress());
         super.write(ctx, msg, promise); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -123,5 +128,30 @@ class MessageDispatcher extends ChannelHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         errors.onError(ctx, cause);
+    }
+    
+    @Override
+    public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+        System.out.println("CLOSE " + ctx.channel().remoteAddress());
+        codec.onClose(ctx, promise);
+    }
+
+    @Override
+    public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
+        System.out.println("CONNECT " + ctx.channel().remoteAddress());
+        codec.onConnect(ctx, remoteAddress, localAddress, promise);
+        
+    }
+
+    @Override
+    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("UNREGISTERED " + ctx.channel().remoteAddress());
+        codec.onChannelUnregistered(ctx);
+    }
+
+    @Override
+    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("REGISTERED " + ctx.channel().remoteAddress());
+        codec.onChannelRegistered(ctx);
     }
 }

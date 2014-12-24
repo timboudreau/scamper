@@ -18,13 +18,12 @@
  */
 package com.mastfrog.scamper;
 
-import static com.mastfrog.scamper.MessageTypeRegistry.MAGIC;
 import io.netty.buffer.ByteBuf;
 
 /**
- * Message types.  Our SCTP messages begin with a 3-byte signature, consisting
- * of a magic number and two bytes identifying the type of message, which is
- * used to look up the handler the message will be dispatched to.
+ * Message types. Our SCTP messages begin with a 3-byte signature, consisting of
+ * a magic number and two bytes identifying the type of message, which is used
+ * to look up the handler the message will be dispatched to.
  * <p>
  * When creating a server, create some MessageType instances, and then use
  * ProtocolModule.bind() to map those to handlers.
@@ -37,7 +36,7 @@ public final class MessageType {
     private final byte byteOne;
     private final byte byteTwo;
     private boolean unknown;
-    public static final int HEADER_SIZE = 3;
+    public static final int HEADER_SIZE = 2;
 
     public MessageType(String name, int byteOne, int byteTwo) {
         this(name, byteOne, byteTwo, false);
@@ -69,9 +68,13 @@ public final class MessageType {
         this.byteTwo = byteTwo;
         this.unknown = unknown;
     }
-    
+
     public <T> Message<T> newMessage(T obj) {
         return new Message<>(this, obj);
+    }
+
+    public int headerLength() {
+        return HEADER_SIZE;
     }
 
     boolean match(byte one, byte two) {
@@ -79,8 +82,9 @@ public final class MessageType {
     }
 
     /**
-     * Returns true if this MessageType is not a registered one - it
-     * contains a byte sequence the application doesn't recognize.
+     * Returns true if this MessageType is not a registered one - it contains a
+     * byte sequence the application doesn't recognize.
+     *
      * @return true if this message is unknown
      */
     public boolean isUnknown() {
@@ -93,14 +97,25 @@ public final class MessageType {
 
     /**
      * Write this mesage type into a ByteBuf
+     *
      * @param buf The buffeer
      * @return the buffer
      */
     public ByteBuf writeHeader(ByteBuf buf) {
-        return buf.writeByte(MAGIC).writeByte(byteOne).writeByte(byteTwo);
+        return buf.writeByte(byteOne).writeByte(byteTwo);
     }
 
-    static MessageType createUnknown(byte one, byte two) {
+    public static MessageType createUnknown(int one, int two) {
+        if (one > Byte.MAX_VALUE || one < Byte.MIN_VALUE) {
+            throw new IllegalArgumentException("Illegal byte value " + one);
+        }
+        if (two > Byte.MAX_VALUE || two < Byte.MIN_VALUE) {
+            throw new IllegalArgumentException("Illegal byte value " + two);
+        }
+        return createUnknown((byte) one, (byte) two);
+    }
+
+    public static MessageType createUnknown(byte one, byte two) {
         return new MessageType("UNKNOWN", one, two, true);
     }
 

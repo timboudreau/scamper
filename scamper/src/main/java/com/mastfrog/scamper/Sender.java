@@ -18,6 +18,7 @@
  */
 package com.mastfrog.scamper;
 
+import com.mastfrog.scamper.codec.MessageCodec;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.mastfrog.util.Checks;
@@ -44,11 +45,13 @@ public final class Sender {
 
     private final Associations associations;
     private final Codec mapper;
+    private final MessageCodec encoder;
 
     @Inject
-    public Sender(Associations associations, Codec mapper) {
+    public Sender(Associations associations, Codec bsonJson, MessageCodec codec) {
         this.associations = associations;
-        this.mapper = mapper;
+        this.mapper = bsonJson;
+        this.encoder = codec;
     }
 
     /**
@@ -82,7 +85,7 @@ public final class Sender {
         Checks.nonNegative("sctpChannel", sctpChannel);
         ByteBufAllocator alloc = channel.alloc();
         ByteBuf outbound = alloc.buffer();
-        message.type.writeHeader(outbound);
+        
         if (message.body != null) {
             if (message.body instanceof ByteBuf) {
                 message.type.writeHeader(outbound);
@@ -95,13 +98,15 @@ public final class Sender {
                 }
             }
         }
+        ByteBuf finalBuffer = encoder.encode(message.type, outbound, channel);
+//        finalBuffer.writeBytes(outbound);
         NioSctpChannel ch = (NioSctpChannel) channel;
         if (!ch.isOpen()) {
             return ch.newFailedFuture(new ClosedChannelException());
         }
         MessageInfo info = MessageInfo.createOutgoing(ch.association(), ch.remoteAddress(), sctpChannel);
         info.unordered(true);
-        SctpMessage sctpMessage = new SctpMessage(info, outbound);
+        SctpMessage sctpMessage = new SctpMessage(info, finalBuffer);
         return channel.writeAndFlush(sctpMessage);
     }
 

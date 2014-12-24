@@ -2,6 +2,7 @@ package com.mastfrog.scamper.demo.dates;
 
 import com.mastfrog.scamper.Address;
 import com.mastfrog.scamper.Control;
+import com.mastfrog.scamper.DataEncoding;
 import com.mastfrog.scamper.Message;
 import com.mastfrog.scamper.Sender;
 import com.mastfrog.scamper.SctpServerAndClientBuilder;
@@ -23,6 +24,8 @@ public class DateClientDemo {
         Control<Sender> control = new SctpServerAndClientBuilder("date-demo")
                 .withHost("127.0.0.1")
                 .onPort(8007)
+                .withDataEncoding(DataEncoding.BSON) // or JSON or JAVA_SERIALIZATION
+                .useLoggingHandler()
                 .bind(WHAT_TIME_IS_IT, DateDemo.DateQueryHandler.class)
                 .bind(THE_TIME_IS, DateDemo.DateResponseHandler.class)
                 .buildSender(args);

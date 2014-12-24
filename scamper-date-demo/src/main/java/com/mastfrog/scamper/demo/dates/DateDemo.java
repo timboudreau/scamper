@@ -2,6 +2,7 @@ package com.mastfrog.scamper.demo.dates;
 
 import com.mastfrog.scamper.SctpServer;
 import com.mastfrog.scamper.Control;
+import com.mastfrog.scamper.DataEncoding;
 import com.mastfrog.scamper.Message;
 import com.mastfrog.scamper.MessageHandler;
 import com.mastfrog.scamper.MessageType;
@@ -9,6 +10,7 @@ import com.mastfrog.scamper.SctpServerAndClientBuilder;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 
@@ -25,6 +27,8 @@ public class DateDemo {
         Control<SctpServer> control = new SctpServerAndClientBuilder("datedemo")
                 .onPort(8007)
                 .withWorkerThreads(3)
+                .useLoggingHandler()
+                .withDataEncoding(DataEncoding.BSON) // or JSON or JAVA_SERIALIZATION
                 .bind(WHAT_TIME_IS_IT, DateQueryHandler.class)
                 .bind(THE_TIME_IS, DateResponseHandler.class)
                 .buildServer(args);
@@ -62,7 +66,7 @@ public class DateDemo {
         }
     }
 
-    public static class DateRecord {
+    public static class DateRecord implements Serializable {
 
         public long when = System.currentTimeMillis();
     }

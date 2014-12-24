@@ -26,10 +26,9 @@ import java.util.Set;
  *
  * @author Tim Boudreau
  */
-final class MessageTypeRegistry {
+public final class MessageTypeRegistry {
 
     private final Set<MessageType> types;
-    public static final byte MAGIC = 123;
 
     MessageTypeRegistry(Set<MessageType> types) {
         this.types = ImmutableSet.copyOf(types);
@@ -41,18 +40,15 @@ final class MessageTypeRegistry {
 
     public MessageType forByteBuf(ByteBuf buf) {
         if (buf.readableBytes() >= 3) {
-            byte zero = buf.readByte();
-            if (zero == MAGIC) {
-                byte one = buf.readByte();
-                byte two = buf.readByte();
-                for (MessageType mt : types) {
-                    if (mt.match(one, two)) {
-                        buf.discardReadBytes();
-                        return mt;
-                    }
+            byte one = buf.readByte();
+            byte two = buf.readByte();
+            for (MessageType mt : types) {
+                if (mt.match(one, two)) {
+                    buf.discardReadBytes();
+                    return mt;
                 }
-                return MessageType.createUnknown(one, two);
             }
+            return MessageType.createUnknown(one, two);
         }
         buf.resetReaderIndex();
         return MessageType.createUnknown((byte) 0, (byte) 0);

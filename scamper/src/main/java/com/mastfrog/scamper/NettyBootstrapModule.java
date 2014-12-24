@@ -33,6 +33,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 /**
@@ -50,25 +52,36 @@ final class NettyBootstrapModule extends AbstractModule {
     private final Class<? extends ChannelHandlerAdapter> adap;
     private final int bossThreads;
     private final int workerThreads;
-    private final boolean useBson;
+    private final DataEncoding encoding;
 
-    public NettyBootstrapModule(Class<? extends ChannelHandlerAdapter> adap, int bossThreads, int workerThreads, boolean useBson) {
+    public NettyBootstrapModule(Class<? extends ChannelHandlerAdapter> adap, int bossThreads, int workerThreads, DataEncoding encoding) {
         this.adap = adap;
         this.bossThreads = bossThreads;
         this.workerThreads = workerThreads;
-        this.useBson = useBson;
+        this.encoding = encoding;
     }
 
     @Override
     protected void configure() {
-        if (useBson) {
-            BsonFactory bsonFactory = new BsonFactory();
-            bind(BsonFactory.class).toInstance(bsonFactory);
-            bind(ObjectMapper.class).toInstance(new ObjectMapper(bsonFactory));
-        } else {
-            bind(ObjectMapper.class).toInstance(new ObjectMapper());
+        bind(DataEncoding.class).toInstance(encoding);
+        switch (encoding) {
+            case BSON:
+                BsonFactory bsonFactory = new BsonFactory();
+                bind(BsonFactory.class).toInstance(bsonFactory);
+                bind(ObjectMapper.class).toInstance(new ObjectMapper(bsonFactory));
+                bind(Codec.class).to(CodecImpl.class);
+                break;
+            case JSON:
+                bind(ObjectMapper.class).toInstance(new ObjectMapper());
+                bind(Codec.class).to(CodecImpl.class);
+                break;
+            case JAVA_SERIALIZATION :
+                bind(Codec.class).to(SerializationCodec.class);
+                break;
+            default :
+                throw new AssertionError(encoding);
+
         }
-        bind(Codec.class).to(CodecImpl.class);
         bind(ChannelHandlerAdapter.class).to(adap);
         bind(EventLoopGroup.class).annotatedWith(Names.named("boss")).toInstance(new NioEventLoopGroup(bossThreads));
         bind(EventLoopGroup.class).annotatedWith(Names.named("worker")).toInstance(workerThreads == -1 ? new NioEventLoopGroup() : new NioEventLoopGroup(workerThreads));
@@ -129,5 +142,35 @@ final class NettyBootstrapModule extends AbstractModule {
         public <T> T readValue(InputStream in, Class<T> type) throws IOException {
             return mapper.readValue(in, type);
         }
+    }
+
+    private static final class SerializationCodec implements Codec {
+
+        @Override
+        public <T> String writeValueAsString(T t) throws IOException {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public <T> void writeValue(T t, OutputStream out) throws IOException {
+            try (ObjectOutputStream oout = new ObjectOutputStream(out)) {
+                oout.writeObject(t);
+            }
+        }
+
+        @Override
+        public <T> byte[] writeValueAsBytes(T t) throws IOException {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public <T> T readValue(InputStream in, Class<T> type) throws IOException {
+            try (ObjectInputStream oin = new ObjectInputStream(in)) {
+                return type.cast(oin.readObject());
+            } catch (ClassNotFoundException ex) {
+                throw new IOException(ex);
+            }
+        }
+
     }
 }

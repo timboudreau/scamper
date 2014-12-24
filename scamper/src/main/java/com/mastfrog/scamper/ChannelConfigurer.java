@@ -89,6 +89,7 @@ public class ChannelConfigurer {
         b = b.group(group).channel(NioSctpChannel.class)
                 .option(SctpChannelOption.SCTP_NODELAY, true)
                 .option(ChannelOption.ALLOCATOR, alloc)
+                .handler(new LoggingHandler(LogLevel.INFO))
                 .handler(init);
         return b;
     }

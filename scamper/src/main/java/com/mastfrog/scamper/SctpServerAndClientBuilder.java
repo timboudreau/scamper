@@ -73,8 +73,9 @@ public class SctpServerAndClientBuilder {
     private final List<Settings> settings = new LinkedList<>();
     private boolean built;
     private final String settingsName;
-    private boolean useBson = true;
+    private DataEncoding dataEncoding = DataEncoding.BSON;
     private ErrorHandler errors;
+    private boolean useLoggingHandler = true;
 
     public SctpServerAndClientBuilder() {
         this("scamper");
@@ -92,7 +93,7 @@ public class SctpServerAndClientBuilder {
     public SctpServerAndClientBuilder(String settingsName) {
         Checks.notNull("settingsName", settingsName);
         this.settingsName = settingsName;
-        option(ChannelOption.TCP_NODELAY, true);
+        option(SctpChannelOption.SCTP_NODELAY, true);
     }
 
     /**
@@ -108,28 +109,19 @@ public class SctpServerAndClientBuilder {
         return this;
     }
 
-    /**
-     * Turn on use of BSON in message payloads - this is the default, so you do
-     * not need to call this unless you think some code has previously turned
-     * this value off.
-     *
-     * @return This
-     */
-    public SctpServerAndClientBuilder useBson() {
-        useBson = true;
-        return this;
-    }
 
     /**
-     * Turn off use of BSON for debugging purposes - instead payloads will be
-     * sent in plain JSON. Note that both sides of the wire will need to have
-     * this set, or they will not succeed in sending each other messages. This
-     * option is avialable for protocol debugging purposes.
-     *
+     * Set the way data should be encoded on the wire - BSON, JSON or
+     * JAVA_SERIALIZATION.  Note this has nothing to do with any
+     * encryption or compression that may be layered on top of the data
+     * format.
+     * 
+     * @param encoding The encoding
      * @return this
      */
-    public SctpServerAndClientBuilder useJson() {
-        useBson = false;
+    public SctpServerAndClientBuilder withDataEncoding(DataEncoding encoding) {
+        Checks.notNull("dataEncoding", encoding);
+        this.dataEncoding = encoding;
         return this;
     }
 
@@ -199,7 +191,7 @@ public class SctpServerAndClientBuilder {
     }
 
     private ProtocolModule protoModule() {
-        ProtocolModule m = new ProtocolModule(eventThreads, workerThreads, useBson);
+        ProtocolModule m = new ProtocolModule(eventThreads, workerThreads, dataEncoding);
         for (ProtocolModule.Entry e : this.bindings) {
             m.addEntry(e);
         }
@@ -212,7 +204,7 @@ public class SctpServerAndClientBuilder {
             builder.add(m);
         }
         builder.add(protoModule());
-        builder.add(new Mod(options, serverOptions, clientOptions, errors));
+        builder.add(new Mod(options, serverOptions, clientOptions, errors, useLoggingHandler));
         return builder;
     }
 
@@ -226,6 +218,26 @@ public class SctpServerAndClientBuilder {
      */
     public SctpServerAndClientBuilder withErrorHandler(ErrorHandler errors) {
         this.errors = errors;
+        return this;
+    }
+
+    /**
+     * Bind a Netty logging handler which will log events (connect,
+     * active, read, write)
+     * @return this
+     */
+    public SctpServerAndClientBuilder useLoggingHandler() {
+        this.useLoggingHandler = true;
+        return this;
+    }
+
+    /**
+     * Do not bind a Netty logging handler which will log events (connect,
+     * active, read, write)
+     * @return this
+     */
+    public SctpServerAndClientBuilder noLoggingHandler() {
+        this.useLoggingHandler = false;
         return this;
     }
 
@@ -264,12 +276,14 @@ public class SctpServerAndClientBuilder {
         private final Set<OptionEntry<?>> serverOptions;
         private final Set<OptionEntry<?>> clientOptions;
         private final ErrorHandler errors;
+        private final boolean useLoggingHandler;
 
-        public Mod(Set<OptionEntry<?>> entries, Set<OptionEntry<?>> serverOptions, Set<OptionEntry<?>> clientOptions, ErrorHandler errors) {
+        public Mod(Set<OptionEntry<?>> entries, Set<OptionEntry<?>> serverOptions, Set<OptionEntry<?>> clientOptions, ErrorHandler errors, boolean useLoggingHandler) {
             this.bothOptions = entries;
             this.serverOptions = serverOptions;
             this.clientOptions = clientOptions;
             this.errors = errors;
+            this.useLoggingHandler = useLoggingHandler;
         }
 
         @Override
@@ -277,6 +291,7 @@ public class SctpServerAndClientBuilder {
             bind(OPTION_ENTRY_TYPE).annotatedWith(Names.named("both")).toInstance(bothOptions);
             bind(OPTION_ENTRY_TYPE).annotatedWith(Names.named("server")).toInstance(clientOptions);
             bind(OPTION_ENTRY_TYPE).annotatedWith(Names.named("client")).toInstance(serverOptions);
+            bind(Boolean.TYPE).annotatedWith(Names.named("_log")).toInstance(useLoggingHandler);
             bind(ChannelConfigurer.class).to(Config.class);
             if (errors != null) {
                 bind(ErrorHandler.class).toInstance(errors);
@@ -288,6 +303,7 @@ public class SctpServerAndClientBuilder {
             private final Set<OptionEntry<?>> bothOptions;
             private final Set<OptionEntry<?>> serverOptions;
             private final Set<OptionEntry<?>> clientOptions;
+            private final boolean useLoggingHandler;
 
             @Inject
             public Config(@Named(value = "boss") EventLoopGroup boss,
@@ -296,12 +312,14 @@ public class SctpServerAndClientBuilder {
                     @Named("both") Set<OptionEntry<?>> bothOptions,
                     @Named("server") Set<OptionEntry<?>> severOptions,
                     @Named("client") Set<OptionEntry<?>> clientOptions,
+                    @Named("_log") boolean useLoggingHandler,
                     ByteBufAllocator alloc
             ) {
                 super(boss, worker, handler, alloc);
                 this.bothOptions = ImmutableSet.copyOf(bothOptions);
                 this.serverOptions = ImmutableSet.copyOf(severOptions);
                 this.clientOptions = ImmutableSet.copyOf(clientOptions);
+                this.useLoggingHandler = useLoggingHandler;
             }
 
             @Override
@@ -310,9 +328,13 @@ public class SctpServerAndClientBuilder {
                 // Set default options - the builder can override them
                 b = b.group(group, worker)
                         .channel(NioSctpServerChannel.class)
+                        .handler(new LoggingHandler(LogLevel.INFO))
                         .option(SctpChannelOption.SCTP_NODELAY, true)
                         .option(ChannelOption.SO_BACKLOG, 1000)
                         .option(ChannelOption.ALLOCATOR, alloc);
+                if (useLoggingHandler) {
+                    b = b.handler(new LoggingHandler(LogLevel.INFO));
+                }
                 for (OptionEntry<?> entry : bothOptions) {
                     b = entry.apply(b);
                 }
@@ -331,6 +353,9 @@ public class SctpServerAndClientBuilder {
                 b = b.group(group).channel(NioSctpChannel.class)
                         .option(SctpChannelOption.SCTP_NODELAY, true)
                         .option(ChannelOption.ALLOCATOR, alloc);
+                if (useLoggingHandler) {
+                    b = b.handler(new LoggingHandler(LogLevel.INFO));
+                }
                 for (OptionEntry<?> entry : bothOptions) {
                     b = entry.apply(b);
                 }

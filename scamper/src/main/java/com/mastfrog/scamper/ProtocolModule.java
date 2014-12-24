@@ -42,16 +42,16 @@ public class ProtocolModule extends AbstractModule {
     private boolean configureRan;
     private final int bossThreads;
     private final int workerThreads;
-    private final boolean useBson;
+    private final DataEncoding encoding;
 
     public ProtocolModule() {
-        this(1, 8, true);
+        this(1, 8, DataEncoding.BSON);
     }
 
-    public ProtocolModule(int bossThreads, int workerThreads, boolean useBson) {
+    public ProtocolModule(int bossThreads, int workerThreads, DataEncoding useBson) {
         this.bossThreads = bossThreads;
         this.workerThreads = workerThreads;
-        this.useBson = useBson;
+        this.encoding = useBson;
         secureRandom = new SecureRandom();
         rand = new Random(secureRandom.nextLong());
     }
@@ -90,7 +90,7 @@ public class ProtocolModule extends AbstractModule {
         // up and running - Guice doens't allow dynamic bindings
         configureRan = true;
         // Bootstrap the basics
-        install(new NettyBootstrapModule(MessageDispatcher.class, bossThreads, workerThreads, useBson));
+        install(new NettyBootstrapModule(MessageDispatcher.class, bossThreads, workerThreads, encoding));
         // Used for a few things
         bind(Random.class).toInstance(rand);
         bind(SecureRandom.class).toInstance(secureRandom);

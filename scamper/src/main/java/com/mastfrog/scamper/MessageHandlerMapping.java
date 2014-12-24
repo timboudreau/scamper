@@ -54,7 +54,7 @@ final class MessageHandlerMapping {
 
         @Override
         public Message<Void> onMessage(Message<ByteBuf> data, ChannelHandlerContext ctx) {
-            System.err.println("UNKNOWN MESSAGE " + data.type);
+            System.err.println("Discarding unknown message " + data.type + " - " + data.body);
             ctx.channel().close();
             if (data.body  != null) {
                 data.body.release();
