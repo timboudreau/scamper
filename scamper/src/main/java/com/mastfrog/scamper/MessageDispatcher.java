@@ -85,7 +85,6 @@ class MessageDispatcher extends ChannelHandlerAdapter {
         } else {
             try (ByteBufInputStream in = new ByteBufInputStream(buf)) {
                 M arg = mapper.readValue(in, type);
-                System.out.println("GOT " + arg);
                 theMessage = messageType.newMessage(arg);
             } catch (JsonParseException ex) {
                 try (ByteBufInputStream in2 = new ByteBufInputStream(buf)) {
@@ -100,11 +99,8 @@ class MessageDispatcher extends ChannelHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        System.out.println("ChannelRead ");
         SctpMessage sctpMsg = (SctpMessage) msg;
         MessageTypeAndBuffer decoded = codec.decode(sctpMsg, ctx);
-        
-        System.out.println("DECODED " + decoded.buf);
         
         // PENDING: Give MessageHandler a way to be handed the ChannelFuture from the send,
         // and or receive a reply
@@ -116,7 +112,6 @@ class MessageDispatcher extends ChannelHandlerAdapter {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        System.out.println("Channel write " + msg + " to " + ctx.channel().remoteAddress());
         super.write(ctx, msg, promise); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -132,26 +127,21 @@ class MessageDispatcher extends ChannelHandlerAdapter {
     
     @Override
     public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-        System.out.println("CLOSE " + ctx.channel().remoteAddress());
         codec.onClose(ctx, promise);
     }
 
     @Override
     public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
-        System.out.println("CONNECT " + ctx.channel().remoteAddress());
         codec.onConnect(ctx, remoteAddress, localAddress, promise);
-        
     }
 
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("UNREGISTERED " + ctx.channel().remoteAddress());
         codec.onChannelUnregistered(ctx);
     }
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("REGISTERED " + ctx.channel().remoteAddress());
         codec.onChannelRegistered(ctx);
     }
 }

@@ -78,21 +78,27 @@ public interface MessageCodec {
      *
      * @param ctx The context
      */
-    void onChannelActive(ChannelHandlerContext ctx);
+    default void onChannelActive(ChannelHandlerContext ctx) {
+        ctx.fireChannelActive();
+    }
 
     /**
      * Called when a channel is registered
      *
      * @param ctx The context
      */
-    void onChannelRegistered(ChannelHandlerContext ctx);
+    default void onChannelRegistered(ChannelHandlerContext ctx) {
+        ctx.fireChannelUnregistered();
+    }
 
     /**
      * Called when a channel is unregistered
      *
      * @param ctx The context
      */
-    void onChannelUnregistered(ChannelHandlerContext ctx);
+    default void onChannelUnregistered(ChannelHandlerContext ctx) {
+        ctx.fireChannelUnregistered();
+    }
 
     /**
      * Called when the channel is closed
@@ -101,7 +107,9 @@ public interface MessageCodec {
      * @param promise A future
      * @throws Exception if something goes wrong
      */
-    void onClose(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception;
+    default void onClose(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+        ctx.close(promise);
+    }
 
     /**
      * Called when a connection is established, in order to perform any
@@ -113,6 +121,7 @@ public interface MessageCodec {
      * @param promise A future
      * @throws Exception if something goes wrong
      */
-    void onConnect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception;
-
+    default void onConnect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
+        ctx.connect(remoteAddress, localAddress, promise);
+    }
 }

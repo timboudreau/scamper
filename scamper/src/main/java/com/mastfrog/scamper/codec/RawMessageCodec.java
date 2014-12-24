@@ -75,28 +75,4 @@ public class RawMessageCodec implements MessageCodec {
         return result;
     }
 
-    @Override
-    public void onChannelRegistered(ChannelHandlerContext ctx) {
-        ctx.fireChannelUnregistered();
-    }
-
-    @Override
-    public void onChannelUnregistered(ChannelHandlerContext ctx) {
-        ctx.fireChannelUnregistered();
-    }
-
-    @Override
-    public void onChannelActive(ChannelHandlerContext ctx) {
-        ctx.fireChannelActive();
-    }
-
-    @Override
-    public void onConnect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
-        ctx.connect(remoteAddress, localAddress, promise);
-    }
-
-    @Override
-    public void onClose(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-        ctx.close(promise);
-    }
 }

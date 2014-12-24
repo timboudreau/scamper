@@ -93,7 +93,6 @@ public final class Sender {
             } else {
                 message.type.writeHeader(outbound);
                 try (ByteBufOutputStream out = new ByteBufOutputStream(outbound)) {
-                    System.out.println("WRITE BODY " + message.body);
                     mapper.writeValue(message.body, out);
                 }
             }
