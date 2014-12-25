@@ -21,11 +21,15 @@ package com.mastfrog.scamper;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
+import com.mastfrog.giulius.ShutdownHookRegistry;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * An SCTP server which will listen on the specified port and decode and pass
@@ -35,11 +39,26 @@ public final class SctpServer {
 
     private final int port;
     private final ChannelConfigurer config;
+    private ChannelFuture future;
 
     @Inject
-    SctpServer(@Named("port") int port, Provider<ChannelHandlerAdapter> handler, ChannelConfigurer config) {
+    SctpServer(@Named("port") int port, Provider<ChannelHandlerAdapter> handler, ChannelConfigurer config, ShutdownHookRegistry reg) {
         this.port = port;
         this.config = config;
+        reg.add(new Runnable() {
+
+            @Override
+            public void run() {
+                ChannelFuture f = stop();
+                if (f != null) {
+                    try {
+                        f.sync();
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(SctpServer.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -53,6 +72,10 @@ public final class SctpServer {
      * interrupted, say be VM shutdown
      */
     public ChannelFuture start() throws InterruptedException {
+        return start(null);
+    }
+
+    public ChannelFuture start(AtomicReference<ChannelFuture> connectFutureReceiver) throws InterruptedException {
         // Configure the server.
         ServerBootstrap b = new ServerBootstrap();
         config.init(b);
@@ -60,6 +83,24 @@ public final class SctpServer {
 
         // Start the server.
         ChannelFuture f = b.bind(port).sync();
-        return f.channel().closeFuture();
+        // For tests and things that need to delay execution until a connection
+        // has been opened
+        if (connectFutureReceiver != null) {
+            connectFutureReceiver.set(f);
+        }
+        synchronized (this) {
+            return future = f.channel().closeFuture();
+        }
+    }
+
+    public ChannelFuture stop() {
+        ChannelFuture theFuture;
+        synchronized (this) {
+            theFuture = future;
+        }
+        if (theFuture != null) {
+            theFuture.channel().close();
+        }
+        return theFuture;
     }
 }
