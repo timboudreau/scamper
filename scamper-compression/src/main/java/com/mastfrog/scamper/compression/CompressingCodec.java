@@ -6,19 +6,16 @@ import com.mastfrog.scamper.MessageTypeAndBuffer;
 import com.mastfrog.scamper.MessageTypeRegistry;
 import com.mastfrog.scamper.codec.MessageCodec;
 import com.mastfrog.scamper.codec.RawMessageCodec;
+import com.mastfrog.settings.Settings;
 import com.mastfrog.util.Exceptions;
 import com.mastfrog.util.Streams;
-import com.mastfrog.util.collections.CollectionUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.sctp.SctpMessage;
-import io.netty.handler.codec.compression.Bzip2Decoder;
-import io.netty.handler.codec.compression.Bzip2Encoder;
 import java.io.IOException;
-import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -33,11 +30,16 @@ final class CompressingCodec extends MessageCodec {
     private final RawMessageCodec raw;
     private static final int MAGIC = 124;
     private final MessageTypeRegistry reg;
+    private final int level;
 
     @Inject
-    CompressingCodec(RawMessageCodec raw, MessageTypeRegistry reg) {
+    CompressingCodec(RawMessageCodec raw, MessageTypeRegistry reg, Settings settings) {
         this.raw = raw;
         this.reg = reg;
+        level = settings.getInt(CompressionModule.SETTINGS_KEY_GZIP_LEVEL, CompressionModule.DEFAULT_GZIP_COMPRESSION_LEVEL);
+        if (level < 0 || level > 9) {
+            throw new IllegalArgumentException(CompressionModule.SETTINGS_KEY_GZIP_LEVEL + " must be between 0 and 9 but was " + level);
+        }
     }
 
     @Override
@@ -97,7 +99,7 @@ final class CompressingCodec extends MessageCodec {
     }
 
     protected void compress(ByteBuf in, ByteBuf out) throws IOException {
-        try (GZIPOutputStream outStream = new GZIPOutputStream(new ByteBufOutputStream(out), 9)) {
+        try (GZIPOutputStream outStream = new GZIPOutputStream(new ByteBufOutputStream(out), level)) {
             try (ByteBufInputStream inStream = new ByteBufInputStream(in)) {
                 Streams.copy(inStream, outStream, 512);
             }
