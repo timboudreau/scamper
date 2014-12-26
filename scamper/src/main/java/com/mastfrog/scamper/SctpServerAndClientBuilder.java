@@ -189,6 +189,17 @@ public class SctpServerAndClientBuilder {
         Dependencies deps = buildInjector(cmdlineArgs);
         return new ControlImpl<Sender>(deps.getInstance(Sender.class), deps);
     }
+    
+    /**
+     * Add a Guice module that should be used in the application.
+     * 
+     * @param m A guice module
+     * @return this
+     */
+    public SctpServerAndClientBuilder withModule(Module m) {
+        this.modules.add(m);
+        return this;
+    }
 
     private ProtocolModule protoModule() {
         ProtocolModule m = new ProtocolModule(eventThreads, workerThreads, dataEncoding);

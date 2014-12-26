@@ -6,6 +6,7 @@ import com.mastfrog.scamper.DataEncoding;
 import com.mastfrog.scamper.Message;
 import com.mastfrog.scamper.Sender;
 import com.mastfrog.scamper.SctpServerAndClientBuilder;
+import com.mastfrog.scamper.compression.CompressionModule;
 import static com.mastfrog.scamper.demo.dates.DateDemo.WHAT_TIME_IS_IT;
 import static com.mastfrog.scamper.demo.dates.DateDemo.THE_TIME_IS;
 import com.mastfrog.util.collections.MapBuilder;
@@ -24,7 +25,8 @@ public class DateClientDemo {
         Control<Sender> control = new SctpServerAndClientBuilder("date-demo")
                 .withHost("127.0.0.1")
                 .onPort(8007)
-                .withDataEncoding(DataEncoding.BSON) // or JSON or JAVA_SERIALIZATION
+                .withModule(new CompressionModule())
+                .withDataEncoding(DataEncoding.JSON) // BSON or JSON or JAVA_SERIALIZATION
                 .useLoggingHandler()
                 .bind(WHAT_TIME_IS_IT, DateDemo.DateQueryHandler.class)
                 .bind(THE_TIME_IS, DateDemo.DateResponseHandler.class)

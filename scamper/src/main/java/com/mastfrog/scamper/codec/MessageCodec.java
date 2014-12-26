@@ -39,7 +39,7 @@ import java.net.SocketAddress;
  * @author Tim Boudreau
  */
 @ImplementedBy(RawMessageCodec.class)
-public interface MessageCodec {
+public abstract class MessageCodec {
 
     /**
      * Decode an SctpMessage into a MessageType and a payload ByteBuf. The
@@ -51,7 +51,7 @@ public interface MessageCodec {
      * @param ctx The channel context
      * @return A message type and a buffer
      */
-    MessageTypeAndBuffer decode(SctpMessage message, ChannelHandlerContext ctx);
+    public abstract MessageTypeAndBuffer decode(SctpMessage message, ChannelHandlerContext ctx);
 
     /**
      * Encode the passed message type and payload buffer into the format it
@@ -63,22 +63,47 @@ public interface MessageCodec {
      * @return A ByteBuf - if using CompositeBuffer, take care that the writer
      * index is set correctly
      */
-    ByteBuf encode(MessageType type, ByteBuf outbound, Channel channel);
+    public abstract ByteBuf encode(MessageType type, ByteBuf outbound, Channel channel);
 
     /**
      * The first byte of a message, which identifies it as belonging to this
      * codec (there could be more than one).
      *
-     * @return
+     * @return 
      */
-    int magicNumber();
+    protected abstract int magicNumber();
+
+    /**
+     * Determine if this codec recognizes this ByteBuf.
+     * <p>
+     * This method will move the reader index of the passed ByteBuf <i>forward one byte</i>
+     * if it returns true.  If it returns false, the ByteBuf's state will be 
+     * unaltered.
+     * <p>
+     * The default implementation checks if the first byte equals the return
+     * value of <code>magicNumber()</code>.  Implementations that delegate
+     * between multiple codecs should call this method for each until one
+     * accepts it.
+     * 
+     * @param data
+     * @return 
+     */
+    public boolean accept(ByteBuf data) {
+        int old = data.readerIndex();
+        byte b = data.readByte();
+        boolean result = magicNumber() == b;
+        if (!result) {
+            data.readerIndex(old);
+        }
+        return result;
+    }
 
     /**
      * Called when the channel becomes active
      *
      * @param ctx The context
      */
-    default void onChannelActive(ChannelHandlerContext ctx) {
+    public void onChannelActive(ChannelHandlerContext ctx) {
         ctx.fireChannelActive();
     }
 
@@ -87,7 +112,7 @@ public interface MessageCodec {
      *
      * @param ctx The context
      */
-    default void onChannelRegistered(ChannelHandlerContext ctx) {
+    public void onChannelRegistered(ChannelHandlerContext ctx) {
         ctx.fireChannelUnregistered();
     }
 
@@ -96,7 +121,7 @@ public interface MessageCodec {
      *
      * @param ctx The context
      */
-    default void onChannelUnregistered(ChannelHandlerContext ctx) {
+    public void onChannelUnregistered(ChannelHandlerContext ctx) {
         ctx.fireChannelUnregistered();
     }
 
@@ -107,7 +132,7 @@ public interface MessageCodec {
      * @param promise A future
      * @throws Exception if something goes wrong
      */
-    default void onClose(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
+    public void onClose(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
         ctx.close(promise);
     }
 
@@ -121,7 +146,7 @@ public interface MessageCodec {
      * @param promise A future
      * @throws Exception if something goes wrong
      */
-    default void onConnect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
+    public void onConnect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
         ctx.connect(remoteAddress, localAddress, promise);
     }
 }

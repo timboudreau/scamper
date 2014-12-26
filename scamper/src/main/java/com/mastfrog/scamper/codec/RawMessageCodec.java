@@ -27,9 +27,7 @@ import com.mastfrog.util.Codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
 import io.netty.channel.sctp.SctpMessage;
-import java.net.SocketAddress;
 
 /**
  * Encoder which simply sends the raw message.
@@ -37,7 +35,7 @@ import java.net.SocketAddress;
  * @author Tim Boudreau
  */
 @Singleton
-public class RawMessageCodec implements MessageCodec {
+public class RawMessageCodec extends MessageCodec {
 
     protected final Codec jsonBson;
     protected final MessageTypeRegistry messageTypes;
@@ -60,8 +58,7 @@ public class RawMessageCodec implements MessageCodec {
         byte first = buf.readByte();
         if (first == magicNumber()) {
             MessageType messageType = messageTypes.forByteBuf(buf);
-            buf.readerIndex(messageType.headerLength());
-            return new MessageTypeAndBuffer(messageType, buf.slice());
+            return new MessageTypeAndBuffer(messageType, buf);
         }
         return new MessageTypeAndBuffer(MessageType.createUnknown(-1, -1), buf.resetReaderIndex());
     }
@@ -74,5 +71,4 @@ public class RawMessageCodec implements MessageCodec {
         result.writerIndex(buf.readableBytes() + outbound.readableBytes());
         return result;
     }
-
 }

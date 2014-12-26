@@ -7,6 +7,7 @@ import com.mastfrog.scamper.Message;
 import com.mastfrog.scamper.MessageHandler;
 import com.mastfrog.scamper.MessageType;
 import com.mastfrog.scamper.SctpServerAndClientBuilder;
+import com.mastfrog.scamper.compression.CompressionModule;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import java.io.IOException;
@@ -27,8 +28,9 @@ public class DateDemo {
         Control<SctpServer> control = new SctpServerAndClientBuilder("datedemo")
                 .onPort(8007)
                 .withWorkerThreads(3)
+                .withModule(new CompressionModule())
                 .useLoggingHandler()
-                .withDataEncoding(DataEncoding.BSON) // or JSON or JAVA_SERIALIZATION
+                .withDataEncoding(DataEncoding.JSON) // BSON or JSON or JAVA_SERIALIZATION
                 .bind(WHAT_TIME_IS_IT, DateQueryHandler.class)
                 .bind(THE_TIME_IS, DateResponseHandler.class)
                 .buildServer(args);
@@ -67,7 +69,6 @@ public class DateDemo {
     }
 
     public static class DateRecord implements Serializable {
-
         public long when = System.currentTimeMillis();
     }
 }

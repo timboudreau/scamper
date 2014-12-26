@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
@@ -6,18 +6,14 @@
         <artifactId>scamper-parent</artifactId>
         <version>1.2-dev</version>
     </parent>
-    <artifactId>scamper-date-demo</artifactId>
-    <packaging>jar</packaging>
-    <name>Scamper Date Demo</name>
+    <artifactId>scamper-compression</artifactId>
+    <name>Scamper Compression</name>
+    <description>MessageCodec that implements Bzip2 compression over </description>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>scamper</artifactId>
         </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>scamper-compression</artifactId>
-        </dependency>        
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -29,5 +25,10 @@
             <scope>test</scope>
             <type>jar</type>
         </dependency>
-    </dependencies>
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jzlib</artifactId>
+            <type>jar</type>
+        </dependency>
+    </dependencies>    
 </project>

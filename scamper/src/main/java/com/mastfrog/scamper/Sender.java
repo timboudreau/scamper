@@ -88,16 +88,17 @@ public final class Sender {
         
         if (message.body != null) {
             if (message.body instanceof ByteBuf) {
-                message.type.writeHeader(outbound);
+//                outbound.writeByte(encoder.magicNumber());
+//                message.type.writeHeader(outbound);
                 outbound.writeBytes((ByteBuf) message.body);
             } else {
-                message.type.writeHeader(outbound);
+//                message.type.writeHeader(outbound);
                 try (ByteBufOutputStream out = new ByteBufOutputStream(outbound)) {
                     mapper.writeValue(message.body, out);
                 }
             }
         }
-        ByteBuf finalBuffer = encoder.encode(message.type, outbound, channel);
+        ByteBuf encodedBuffer = encoder.encode(message.type, outbound, channel);
 //        finalBuffer.writeBytes(outbound);
         NioSctpChannel ch = (NioSctpChannel) channel;
         if (!ch.isOpen()) {
@@ -105,7 +106,8 @@ public final class Sender {
         }
         MessageInfo info = MessageInfo.createOutgoing(ch.association(), ch.remoteAddress(), sctpChannel);
         info.unordered(true);
-        SctpMessage sctpMessage = new SctpMessage(info, finalBuffer);
+                
+        SctpMessage sctpMessage = new SctpMessage(info, encodedBuffer);
         return channel.writeAndFlush(sctpMessage);
     }
 

@@ -65,7 +65,6 @@ class MessageDispatcher extends ChannelHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("ChannelActive " + ctx.channel().remoteAddress());
         codec.onChannelActive(ctx);
     }
 
@@ -87,8 +86,9 @@ class MessageDispatcher extends ChannelHandlerAdapter {
                 M arg = mapper.readValue(in, type);
                 theMessage = messageType.newMessage(arg);
             } catch (JsonParseException ex) {
+                buf.resetReaderIndex();
                 try (ByteBufInputStream in2 = new ByteBufInputStream(buf)) {
-                    throw new IOException("Invalid JSON: " + Streams.readString(in2, 256), ex);
+                    throw new IOException("Invalid JSON: '" + Streams.readString(in2, 256) + "'", ex);
                 }
             } finally {
                 buf.discardReadBytes();

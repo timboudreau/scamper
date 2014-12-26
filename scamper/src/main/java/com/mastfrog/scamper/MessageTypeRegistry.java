@@ -38,8 +38,14 @@ public final class MessageTypeRegistry {
         types.add(type);
     }
 
+    /**
+     * Decode a message type from the <i>current position</i> of the
+     * passed ByteBuf.
+     * @param buf
+     * @return 
+     */
     public MessageType forByteBuf(ByteBuf buf) {
-        if (buf.readableBytes() >= 3) {
+        if (buf.readableBytes() >= 2) {
             byte one = buf.readByte();
             byte two = buf.readByte();
             for (MessageType mt : types) {
