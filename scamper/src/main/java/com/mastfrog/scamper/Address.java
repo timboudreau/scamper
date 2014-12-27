@@ -37,7 +37,7 @@ public class Address {
     }
     
     public Address(InetSocketAddress a) {
-        this(a.getAddress().toString(), a.getPort());
+        this(a.getAddress().getHostAddress(), a.getPort());
     }
     
     public InetSocketAddress toSocketAddress() {

@@ -52,15 +52,17 @@ class MessageDispatcher extends ChannelHandlerAdapter {
     private final Sender sender;
     private final ErrorHandler errors;
     private final MessageCodec codec;
+    private final Associations assoc;
 
     @Inject
-    public MessageDispatcher(MessageHandlerMapping mapping, Dependencies deps, Codec mapper, Sender sender, ErrorHandler errors, MessageCodec codec) {
+    public MessageDispatcher(MessageHandlerMapping mapping, Dependencies deps, Codec mapper, Sender sender, ErrorHandler errors, MessageCodec codec, Associations assoc) {
         this.deps = deps;
         this.mapper = mapper;
         this.mapping = mapping;
         this.sender = sender;
         this.errors = errors;
         this.codec = codec;
+        this.assoc = assoc;
     }
 
     @Override
@@ -99,6 +101,7 @@ class MessageDispatcher extends ChannelHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        assoc.ensureRegistered(ctx);
         SctpMessage sctpMsg = (SctpMessage) msg;
         MessageTypeAndBuffer decoded = codec.decode(sctpMsg, ctx);
         

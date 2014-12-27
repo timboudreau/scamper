@@ -76,7 +76,7 @@ public class SctpServerAndClientBuilder {
     private DataEncoding dataEncoding = DataEncoding.BSON;
     private ErrorHandler errors;
     private boolean useLoggingHandler = true;
-
+    
     public SctpServerAndClientBuilder() {
         this("scamper");
     }

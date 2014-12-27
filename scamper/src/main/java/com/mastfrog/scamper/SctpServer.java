@@ -24,6 +24,7 @@ import com.google.inject.name.Named;
 import com.mastfrog.giulius.ShutdownHookRegistry;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
@@ -40,6 +41,7 @@ public final class SctpServer {
     private final int port;
     private final ChannelConfigurer config;
     private ChannelFuture future;
+    private static final Logger logger = Logger.getLogger(SctpServer.class.getName());
 
     @Inject
     SctpServer(@Named("port") int port, Provider<ChannelHandlerAdapter> handler, ChannelConfigurer config, ShutdownHookRegistry reg) {
@@ -54,7 +56,7 @@ public final class SctpServer {
                     try {
                         f.sync();
                     } catch (InterruptedException ex) {
-                        Logger.getLogger(SctpServer.class.getName()).log(Level.SEVERE, null, ex);
+                        logger.log(Level.SEVERE, null, ex);
                     }
                 }
             }
@@ -81,8 +83,21 @@ public final class SctpServer {
         config.init(b);
         b.handler(new LoggingHandler(LogLevel.INFO));
 
+        logger.log(Level.FINE, "Start server on {0}", port);
         // Start the server.
-        ChannelFuture f = b.bind(port).sync();
+        ChannelFuture f = b.bind(port);
+        if (logger.isLoggable(Level.FINE)) {
+            f.addListener(new ChannelFutureListener() {
+
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    logger.log(Level.FINE, "Listening for connections on {0}", port);
+                }
+
+            });
+        }
+        f.sync();
+        logger.log(Level.FINER, "Thread proceeding", Thread.currentThread());
         // For tests and things that need to delay execution until a connection
         // has been opened
         if (connectFutureReceiver != null) {

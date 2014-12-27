@@ -34,6 +34,8 @@ import io.netty.channel.sctp.SctpMessage;
 import io.netty.channel.sctp.nio.NioSctpChannel;
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Utility for sending messages.
@@ -46,6 +48,7 @@ public final class Sender {
     private final Associations associations;
     private final Codec mapper;
     private final MessageCodec encoder;
+    private static final Logger logger = Logger.getLogger(Sender.class.getName());
 
     @Inject
     public Sender(Associations associations, Codec bsonJson, MessageCodec codec) {
@@ -85,7 +88,7 @@ public final class Sender {
         Checks.nonNegative("sctpChannel", sctpChannel);
         ByteBufAllocator alloc = channel.alloc();
         ByteBuf outbound = alloc.buffer();
-        
+
         if (message.body != null) {
             if (message.body instanceof ByteBuf) {
 //                outbound.writeByte(encoder.magicNumber());
@@ -106,9 +109,26 @@ public final class Sender {
         }
         MessageInfo info = MessageInfo.createOutgoing(ch.association(), ch.remoteAddress(), sctpChannel);
         info.unordered(true);
-                
+
         SctpMessage sctpMessage = new SctpMessage(info, encodedBuffer);
-        return channel.writeAndFlush(sctpMessage);
+        logger.log(Level.FINE, "Send message to {0} type {1}", new Object[]{channel.remoteAddress(),
+            message.type});
+        ChannelFuture result = channel.writeAndFlush(sctpMessage);
+        if (logger.isLoggable(Level.FINER)) {
+            result.addListener(new ChannelFutureListener() {
+
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    if (future.cause() != null) {
+                        logger.log(Level.SEVERE, "Send to " + ch.remoteAddress() + " failed", future.cause());
+                    } else {
+                        logger.log(Level.FINER, "Send completed to {0}", ch.remoteAddress());
+                    }
+                }
+
+            });
+        }
+        return result;
     }
 
     /**
@@ -130,8 +150,8 @@ public final class Sender {
      * @param message A future which will be notified when the message is
      * flushed to the socket
      * @param l A ChannelFutureListener to be notified when the mesage is
-     * flushed (remember to check <code>ChannelFuture.getCause()</code> to
-     * check for failure)
+     * flushed (remember to check <code>ChannelFuture.getCause()</code> to check
+     * for failure)
      * @return a future that will be notified when the message write is
      * completed
      */
@@ -148,18 +168,23 @@ public final class Sender {
      * flushed to the socket
      * @param sctpChannel The ordinal of the sctp channel
      * @param l A ChannelFutureListener to be notified when the mesage is
-     * flushed (remember to check <code>ChannelFuture.getCause()</code> to
-     * check for failure)
+     * flushed (remember to check <code>ChannelFuture.getCause()</code> to check
+     * for failure)
      * @return a future that will be notified when the message write is
      * completed
      */
-    public ChannelFuture send(Address address, final Message<?> message, final int sctpChannel, final ChannelFutureListener l) {
+    public ChannelFuture send(final Address address, final Message<?> message, final int sctpChannel, final ChannelFutureListener l) {
         Checks.notNull("address", address);
         Checks.notNull("message", message);
         Checks.nonNegative("sctpChannel", sctpChannel);
+        logger.log(Level.FINE, "Send message to {0} on {1} type {1}", new Object[]{address, sctpChannel,
+            message.type});
         return associations.connect(address).addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
+                if (future.cause() == null) {
+                    logger.log(Level.FINE, "Got back connection {0} for {1}", new Object[]{future.channel().remoteAddress(), address});
+                }
                 ChannelFuture fut = send(future.channel(), message, sctpChannel);
                 if (l != null) {
                     fut.addListener(l);

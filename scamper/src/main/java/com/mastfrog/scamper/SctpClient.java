@@ -23,9 +23,12 @@ import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * An SCTP client which will send and receive SCTP messages.
@@ -35,6 +38,7 @@ public final class SctpClient {
     private final String host;
     private final int port;
     private final ChannelConfigurer configurer;
+    private static final Logger logger = Logger.getLogger(SctpClient.class.getName());
 
     @Inject
     SctpClient(@Named("host") String host, @Named("port") int port, Provider<ChannelHandlerAdapter> handler, ChannelConfigurer configurer) {
@@ -59,8 +63,20 @@ public final class SctpClient {
         configurer.init(b)
                 .handler(new LoggingHandler(LogLevel.INFO));
 
+        logger.log(Level.INFO, "Start for {0} on {1}", new Object[]{host, port});
         // Start the client.
-        ChannelFuture f = b.connect(host, port).sync();
+        ChannelFuture f = b.connect(host, port);
+        if (logger.isLoggable(Level.FINE)) {
+            f.addListener(new ChannelFutureListener() {
+
+                @Override
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    logger.log(Level.FINE, "Connect to {0}:{1}", new Object[]{host, port});
+                }
+
+            });
+        }
+        f.sync();
         // Caller can until the connection is closed.
         return f.channel().closeFuture();
     }

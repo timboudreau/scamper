@@ -26,6 +26,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.sctp.nio.NioSctpChannel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
@@ -33,6 +34,8 @@ import java.net.InetSocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Maintains a mapping of addresses and open channels, and manages a rotating
@@ -50,6 +53,7 @@ final class Associations {
             = AttributeKey.valueOf(Associations.class, "instream");
     private static final AttributeKey<AtomicRoundRobin> NEXT_OUT_STREAM
             = AttributeKey.valueOf(Associations.class, "outstream");
+    private static final Logger logger = Logger.getLogger(Associations.class.getName());
 
     @Inject
     Associations(final ChannelConfigurer config) {
@@ -66,6 +70,23 @@ final class Associations {
             }
         }
         return result.connect();
+    }
+    
+    void ensureRegistered(ChannelHandlerContext ctx) {
+        Address addr = new Address((InetSocketAddress) ctx.channel().remoteAddress());
+        Asso asso = associations.get(addr);
+        if (asso != null) {
+            return;
+        }
+        synchronized(this) {
+            asso = associations.get(addr);
+            if (asso == null) {
+                asso = new Asso(addr, (NioSctpChannel) ctx.channel());
+                asso.future = ctx.channel().newSucceededFuture();
+                ctx.channel().closeFuture().addListener(asso);
+                associations.put(addr, asso);
+            }
+        }
     }
 
     public void register(Channel channel) {
@@ -132,8 +153,10 @@ final class Associations {
 
         public synchronized ChannelFuture connect() {
             if (future != null) {
+                logger.log(Level.FINER, "Reuse connection {0}:{1}", new Object[]{address.host, address.port});
                 return future;
             }
+            logger.log(Level.FINER, "Open connection {0}:{1}", new Object[]{address.host, address.port});
             Bootstrap bootstrap = new Bootstrap();
             config.init(bootstrap);
             //need sync here?
@@ -171,6 +194,7 @@ final class Associations {
 
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
+                    logger.log(Level.FINER, "Closed connection {0}:{1}", new Object[]{address.host, address.port});
                     synchronized (Associations.this) {
                         if (Associations.this.associations.get(address) == Asso.this) {
                             Associations.this.associations.remove(address);
@@ -183,15 +207,38 @@ final class Associations {
         @Override
         public void operationComplete(ChannelFuture future) throws Exception {
             NioSctpChannel channel;
+            if (future.cause() != null) {
+                synchronized (Associations.this) {
+                    if (associations.get(address) == Asso.this) {
+                        associations.remove(address);
+                    }
+                }
+                Throwable c = future.cause();
+                while (c.getCause() != null) {
+                    c = c.getCause();
+                }
+                logger.log(Level.FINER, "Failed connecting to " + address, c);
+                synchronized (Associations.this) {
+                    Asso a = associations.get(address);
+                    if (a == Asso.this) {
+                        associations.remove(address);
+                    }
+                }
+                return;
+            } else {
+                logger.log(Level.FINER, "Opened connection {0}:{1}", new Object[]{address.host, address.port});
+            }
             synchronized (this) {
                 channel = (NioSctpChannel) future.channel();
             }
             try {
                 onChannelAcquired(channel);
             } catch (ChannelException ex) {
+                logger.log(Level.FINE, "Failed to connect", ex);
                 if (ex.getCause() instanceof ClosedChannelException) {
                     synchronized (Associations.this) {
-                        if (associations.get(address) == Asso.this) {
+                        Asso a = associations.get(address);
+                        if (a == Asso.this) {
                             associations.remove(address);
                         }
                     }
