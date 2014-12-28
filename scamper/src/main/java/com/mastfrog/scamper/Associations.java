@@ -205,6 +205,7 @@ final class Associations {
         }
 
         @Override
+        @SuppressWarnings("ThrowableResultIgnored")
         public void operationComplete(ChannelFuture future) throws Exception {
             NioSctpChannel channel;
             if (future.cause() != null) {
