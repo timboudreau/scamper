@@ -82,7 +82,8 @@ final class NettyBootstrapModule extends AbstractModule {
                 throw new AssertionError(encoding);
 
         }
-        bind(ChannelHandlerAdapter.class).to(adap);
+        bind(ChannelHandlerAdapter.class).annotatedWith(Names.named("dispatcher")).to(adap);
+        bind(ChannelHandlerAdapter.class).annotatedWith(Names.named("processor")).to(InboundMessageTypeAndBufferHandler.class);
         bind(EventLoopGroup.class).annotatedWith(Names.named("boss")).toInstance(new NioEventLoopGroup(bossThreads));
         bind(EventLoopGroup.class).annotatedWith(Names.named("worker")).toInstance(workerThreads == -1 ? new NioEventLoopGroup() : new NioEventLoopGroup(workerThreads));
         bind(ByteBufAllocator.class).toInstance(new PooledByteBufAllocator(true));

@@ -43,7 +43,7 @@ import java.net.SocketAddress;
  */
 @Singleton
 @Sharable
-class MessageDispatcher extends SimpleChannelInboundHandler<SctpMessage> {
+class InboundMessageDispatcher extends SimpleChannelInboundHandler<SctpMessage> {
 
     private final Dependencies deps;
 
@@ -55,7 +55,7 @@ class MessageDispatcher extends SimpleChannelInboundHandler<SctpMessage> {
     private final Associations assoc;
 
     @Inject
-    public MessageDispatcher(MessageHandlerMapping mapping, Dependencies deps, Codec mapper, Sender sender, ErrorHandler errors, MessageCodec codec, Associations assoc) {
+    public InboundMessageDispatcher(MessageHandlerMapping mapping, Dependencies deps, Codec mapper, Sender sender, ErrorHandler errors, MessageCodec codec, Associations assoc) {
         this.deps = deps;
         this.mapper = mapper;
         this.mapping = mapping;
@@ -75,46 +75,11 @@ class MessageDispatcher extends SimpleChannelInboundHandler<SctpMessage> {
         codec.onChannelActive(ctx);
     }
 
-    private Message<?> handleMessage(MessageTypeAndBuffer typeAndPayload, ChannelHandlerContext ctx) throws IOException {
-        MessageType messageType = typeAndPayload.messageType;
-        MessageHandler<?, ?> result = deps.getInstance(mapping.get(messageType));
-        return handleMessage(messageType, result, typeAndPayload.buf, ctx);
-    }
-
-    private <T, M> Message<T> handleMessage(MessageType messageType, MessageHandler<T, M> handler, ByteBuf buf, ChannelHandlerContext ctx) throws IOException {
-        Class<M> type = handler.messageType();
-        Message<M> theMessage;
-        if (type == ByteBuf.class) {
-            theMessage = messageType.newMessage(type.cast(buf));
-        } else if (type == Void.class) {
-            theMessage = messageType.newMessage(null);
-        } else {
-            try (ByteBufInputStream in = new ByteBufInputStream(buf)) {
-                M arg = mapper.readValue(in, type);
-                theMessage = messageType.newMessage(arg);
-            } catch (JsonParseException ex) {
-                buf.resetReaderIndex();
-                try (ByteBufInputStream in2 = new ByteBufInputStream(buf)) {
-                    throw new IOException("Invalid JSON: '" + Streams.readString(in2, 256) + "'", ex);
-                }
-            } finally {
-                buf.discardReadBytes();
-            }
-        }
-        return handler.onMessage(theMessage, ctx);
-    }
-
     @Override
     protected void messageReceived(ChannelHandlerContext ctx, SctpMessage sctpMsg) throws Exception {
         assoc.ensureRegistered(ctx);
         MessageTypeAndBuffer decoded = codec.decode(sctpMsg, ctx);
-        
-        // PENDING: Give MessageHandler a way to be handed the ChannelFuture from the send,
-        // and or receive a reply
-        Message<?> result = handleMessage(decoded, ctx);
-        if (result != null) {
-            sender.send(ctx.channel(), result, sctpMsg.streamIdentifier());
-        }
+        ctx.fireChannelRead(decoded);
     }
 
     @Override
@@ -131,7 +96,7 @@ class MessageDispatcher extends SimpleChannelInboundHandler<SctpMessage> {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         errors.onError(ctx, cause);
     }
-    
+
     @Override
     public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
         codec.onClose(ctx, promise);

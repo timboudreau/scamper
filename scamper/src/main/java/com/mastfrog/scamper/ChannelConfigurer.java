@@ -52,14 +52,14 @@ public class ChannelConfigurer {
 
     protected final EventLoopGroup group;
     protected final EventLoopGroup worker;
-    protected final Provider<ChannelHandlerAdapter> handler;
+    protected final Init init;
     protected final ByteBufAllocator alloc;
 
     @Inject
-    protected ChannelConfigurer(@Named(value = "boss") EventLoopGroup boss, @Named("worker") EventLoopGroup worker, Provider<ChannelHandlerAdapter> handler, ByteBufAllocator alloc) {
+    protected ChannelConfigurer(@Named(value = "boss") EventLoopGroup boss, @Named("worker") EventLoopGroup worker, Init init, ByteBufAllocator alloc) {
         this.group = boss;
         this.worker = worker;
-        this.handler = handler;
+        this.init = init;
         this.alloc = alloc;
     }
 
@@ -69,7 +69,6 @@ public class ChannelConfigurer {
      * @return The bootstrap
      */
     protected ServerBootstrap init(ServerBootstrap b) {
-        Init init = new Init(handler);
         b = b.group(group, worker)
                 .channel(NioSctpServerChannel.class)
                 .option(ChannelOption.SO_BACKLOG, 1000)
@@ -85,7 +84,6 @@ public class ChannelConfigurer {
      * @return The bootstrap
      */
     protected Bootstrap init(Bootstrap b) {
-        Init init = new Init(handler);
         b = b.group(group).channel(NioSctpChannel.class)
                 .option(SctpChannelOption.SCTP_NODELAY, true)
                 .option(ChannelOption.ALLOCATOR, alloc)
@@ -93,5 +91,4 @@ public class ChannelConfigurer {
                 .handler(init);
         return b;
     }
-
 }

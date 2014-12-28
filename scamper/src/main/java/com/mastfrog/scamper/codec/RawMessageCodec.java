@@ -58,9 +58,9 @@ public class RawMessageCodec extends MessageCodec {
         byte first = buf.readByte();
         if (first == magicNumber()) {
             MessageType messageType = messageTypes.forByteBuf(buf);
-            return new MessageTypeAndBuffer(messageType, buf);
+            return new MessageTypeAndBuffer(messageType, buf, message.streamIdentifier());
         }
-        return new MessageTypeAndBuffer(MessageType.createUnknown(-1, -1), buf.resetReaderIndex());
+        return new MessageTypeAndBuffer(MessageType.createUnknown(-1, -1), buf.resetReaderIndex(), message.streamIdentifier());
     }
 
     @Override

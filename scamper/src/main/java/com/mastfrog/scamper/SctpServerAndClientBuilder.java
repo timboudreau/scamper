@@ -23,6 +23,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -309,6 +310,7 @@ public class SctpServerAndClientBuilder {
             }
         }
 
+        @Singleton
         static final class Config extends ChannelConfigurer {
 
             private final Set<OptionEntry<?>> bothOptions;
@@ -319,14 +321,14 @@ public class SctpServerAndClientBuilder {
             @Inject
             public Config(@Named(value = "boss") EventLoopGroup boss,
                     @Named("worker") EventLoopGroup worker,
-                    Provider<ChannelHandlerAdapter> handler,
+                    Init init,
                     @Named("both") Set<OptionEntry<?>> bothOptions,
                     @Named("server") Set<OptionEntry<?>> severOptions,
                     @Named("client") Set<OptionEntry<?>> clientOptions,
                     @Named("_log") boolean useLoggingHandler,
                     ByteBufAllocator alloc
             ) {
-                super(boss, worker, handler, alloc);
+                super(boss, worker, init, alloc);
                 this.bothOptions = ImmutableSet.copyOf(bothOptions);
                 this.serverOptions = ImmutableSet.copyOf(severOptions);
                 this.clientOptions = ImmutableSet.copyOf(clientOptions);
@@ -335,11 +337,9 @@ public class SctpServerAndClientBuilder {
 
             @Override
             public ServerBootstrap init(ServerBootstrap b) {
-                Init init = new Init(handler);
                 // Set default options - the builder can override them
                 b = b.group(group, worker)
                         .channel(NioSctpServerChannel.class)
-                        .handler(new LoggingHandler(LogLevel.INFO))
                         .option(SctpChannelOption.SCTP_NODELAY, true)
                         .option(ChannelOption.SO_BACKLOG, 1000)
                         .option(ChannelOption.ALLOCATOR, alloc);
@@ -359,7 +359,6 @@ public class SctpServerAndClientBuilder {
 
             @Override
             public Bootstrap init(Bootstrap b) {
-                Init init = new Init(handler);
                 // Set default options - the builder can override them
                 b = b.group(group).channel(NioSctpChannel.class)
                         .option(SctpChannelOption.SCTP_NODELAY, true)
