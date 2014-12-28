@@ -247,5 +247,4 @@ final class Associations {
             }
         }
     }
-
 }

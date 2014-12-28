@@ -28,9 +28,9 @@ import com.mastfrog.util.Streams;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelHandler.Sharable;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.sctp.SctpMessage;
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -43,7 +43,7 @@ import java.net.SocketAddress;
  */
 @Singleton
 @Sharable
-class MessageDispatcher extends ChannelHandlerAdapter {
+class MessageDispatcher extends SimpleChannelInboundHandler<SctpMessage> {
 
     private final Dependencies deps;
 
@@ -63,6 +63,11 @@ class MessageDispatcher extends ChannelHandlerAdapter {
         this.errors = errors;
         this.codec = codec;
         this.assoc = assoc;
+    }
+
+    @Override
+    public boolean isSharable() {
+        return true;
     }
 
     @Override
@@ -100,9 +105,8 @@ class MessageDispatcher extends ChannelHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    protected void messageReceived(ChannelHandlerContext ctx, SctpMessage sctpMsg) throws Exception {
         assoc.ensureRegistered(ctx);
-        SctpMessage sctpMsg = (SctpMessage) msg;
         MessageTypeAndBuffer decoded = codec.decode(sctpMsg, ctx);
         
         // PENDING: Give MessageHandler a way to be handed the ChannelFuture from the send,
