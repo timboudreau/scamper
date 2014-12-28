@@ -43,7 +43,7 @@ import java.net.SocketAddress;
  */
 @Singleton
 @Sharable
-class InboundMessageDispatcher extends SimpleChannelInboundHandler<SctpMessage> {
+final class InboundMessageDispatcher extends SimpleChannelInboundHandler<SctpMessage> {
 
     private final Dependencies deps;
 

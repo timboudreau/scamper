@@ -15,7 +15,7 @@ import java.io.IOException;
  *
  * @author Tim Boudreau
  */
-public class InboundMessageTypeAndBufferHandler extends SimpleChannelInboundHandler<MessageTypeAndBuffer> {
+final class InboundMessageTypeAndBufferHandler extends SimpleChannelInboundHandler<MessageTypeAndBuffer> {
 
     private final MessageHandlerMapping mapping;
     private final Dependencies deps;
@@ -28,6 +28,11 @@ public class InboundMessageTypeAndBufferHandler extends SimpleChannelInboundHand
         this.deps = deps;
         this.mapper = mapper;
         this.sender = sender;
+    }
+
+    @Override
+    public boolean isSharable() {
+        return true;
     }
 
     private Message<?> handleMessage(MessageTypeAndBuffer typeAndPayload, ChannelHandlerContext ctx) throws IOException {
