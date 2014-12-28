@@ -36,13 +36,15 @@ final class Init extends ChannelInitializer<SctpChannel> {
 
     private final Provider<ChannelHandlerAdapter> handler;
     private final Provider<ChannelHandlerAdapter> processor;
-    private final Provider<InboundSctpMessageToByteBufAdapter> sctpMessageToBytes;
+    private final Provider<InboundSctpMessageToByteBufDecoder> sctpMessageToBytes;
+    private final Provider<InboundMessageProcessor> proc;
 
     @Inject
-    public Init(@Named("dispatcher") Provider<ChannelHandlerAdapter> handler, @Named("processor") Provider<ChannelHandlerAdapter> processor, Provider<InboundSctpMessageToByteBufAdapter> inbound) {
+    public Init(@Named("dispatcher") Provider<ChannelHandlerAdapter> handler, @Named("processor") Provider<ChannelHandlerAdapter> processor, Provider<InboundSctpMessageToByteBufDecoder> inbound, Provider<InboundMessageProcessor> proc) {
         this.handler = handler;
         this.processor = processor;
         sctpMessageToBytes = inbound;
+        this.proc = proc;
     }
 
     @Override
@@ -51,5 +53,6 @@ final class Init extends ChannelInitializer<SctpChannel> {
         pipeline.addLast(sctpMessageToBytes.get());
         pipeline.addLast(handler.get());
         pipeline.addLast(processor.get());
+        pipeline.addLast(proc.get());
     }
 }

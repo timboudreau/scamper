@@ -40,8 +40,8 @@ final class MessageHandlerMapping {
         this.map = ImmutableMap.copyOf(map);
     }
 
-    public Class<? extends MessageHandler> get(MessageType type) {
-        Class<? extends MessageHandler> handler = map.get(type);
+    public Class<? extends MessageHandler<?, ?>> get(MessageType type) {
+        Class<? extends MessageHandler<?, ?>> handler = map.get(type);
         return handler == null ? NullHandler.class : handler;
     }
 
@@ -56,7 +56,7 @@ final class MessageHandlerMapping {
         public Message<Void> onMessage(Message<ByteBuf> data, ChannelHandlerContext ctx) {
             System.err.println("Discarding unknown message " + data.type + " - " + data.body);
             ctx.channel().close();
-            if (data.body  != null) {
+            if (data.body != null) {
                 data.body.release();
             }
             return null;

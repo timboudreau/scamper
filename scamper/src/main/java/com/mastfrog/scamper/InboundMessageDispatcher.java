@@ -61,7 +61,7 @@ final class InboundMessageDispatcher extends SimpleChannelInboundHandler<ByteBuf
     @Override
     protected void messageReceived(ChannelHandlerContext ctx, ByteBuf sctpMsg) throws Exception {
         assoc.ensureRegistered(ctx);
-        int sctpChannel = ctx.attr(InboundSctpMessageToByteBufAdapter.SCTP_CHANNEL_KEY).get();
+        int sctpChannel = ctx.attr(InboundSctpMessageToByteBufDecoder.SCTP_CHANNEL_KEY).get();
         MessageTypeAndBuffer decoded = codec.decode(sctpMsg, ctx, sctpChannel);
         ctx.fireChannelRead(decoded);
     }

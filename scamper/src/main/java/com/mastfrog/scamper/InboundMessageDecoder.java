@@ -14,26 +14,23 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.IOException;
 
 /**
- * Takes incoming MessageTypeAndBuffer, looks up the handler and processes
- * them.
+ * Takes incoming MessageTypeAndBuffer, looks up the handler and processes them.
  *
  * @author Tim Boudreau
  */
 @Singleton
 @ChannelHandler.Sharable
-final class InboundMessageTypeAndBufferHandler extends SimpleChannelInboundHandler<MessageTypeAndBuffer> {
+final class InboundMessageDecoder extends SimpleChannelInboundHandler<MessageTypeAndBuffer> {
 
     private final MessageHandlerMapping mapping;
     private final Dependencies deps;
     private final Codec mapper;
-    private final Sender sender;
 
     @Inject
-    InboundMessageTypeAndBufferHandler(MessageHandlerMapping mapping, Dependencies deps, Codec mapper, Sender sender) {
+    InboundMessageDecoder(MessageHandlerMapping mapping, Dependencies deps, Codec mapper) {
         this.mapping = mapping;
         this.deps = deps;
         this.mapper = mapper;
-        this.sender = sender;
     }
 
     @Override
@@ -44,11 +41,10 @@ final class InboundMessageTypeAndBufferHandler extends SimpleChannelInboundHandl
     private Message<?> handleMessage(MessageTypeAndBuffer typeAndPayload, ChannelHandlerContext ctx) throws IOException {
         MessageType messageType = typeAndPayload.messageType;
         MessageHandler<?, ?> result = deps.getInstance(mapping.get(messageType));
-        return handleMessage(messageType, result, typeAndPayload.buf, ctx);
+        return decode(messageType, result.messageType(), typeAndPayload.buf, ctx);
     }
 
-    private <T, M> Message<T> handleMessage(MessageType messageType, MessageHandler<T, M> handler, ByteBuf buf, ChannelHandlerContext ctx) throws IOException {
-        Class<M> type = handler.messageType();
+    private <T, M> Message<M> decode(MessageType messageType, Class<M> type, ByteBuf buf, ChannelHandlerContext ctx) throws IOException {
         Message<M> theMessage;
         if (type == ByteBuf.class) {
             theMessage = messageType.newMessage(type.cast(buf));
@@ -67,16 +63,16 @@ final class InboundMessageTypeAndBufferHandler extends SimpleChannelInboundHandl
                 buf.discardReadBytes();
             }
         }
-        return handler.onMessage(theMessage, ctx);
+        return theMessage;
     }
 
     @Override
     protected void messageReceived(ChannelHandlerContext ctx, MessageTypeAndBuffer decoded) throws Exception {
         // PENDING: Give MessageHandler a way to be handed the ChannelFuture from the send,
         // and or receive a reply
-        Message<?> result = handleMessage(decoded, ctx);
-        if (result != null) {
-            sender.send(ctx.channel(), result, decoded.streamIdentifier);
+        Message<?> message = handleMessage(decoded, ctx);
+        if (message != null) {
+            ctx.fireChannelRead(message);
         }
     }
 }

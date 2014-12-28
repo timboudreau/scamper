@@ -23,13 +23,13 @@ import io.netty.util.AttributeKey;
  */
 @Singleton
 @ChannelHandler.Sharable
-final class InboundSctpMessageToByteBufAdapter extends SimpleChannelInboundHandler<SctpMessage> {
+final class InboundSctpMessageToByteBufDecoder extends SimpleChannelInboundHandler<SctpMessage> {
 
-    public static final AttributeKey<Integer> SCTP_CHANNEL_KEY = AttributeKey.valueOf(InboundSctpMessageToByteBufAdapter.class, "sctpChannel");
+    public static final AttributeKey<Integer> SCTP_CHANNEL_KEY = AttributeKey.valueOf(InboundSctpMessageToByteBufDecoder.class, "sctpChannel");
     private final Associations assoc;
 
     @Inject
-    InboundSctpMessageToByteBufAdapter(Associations assoc) {
+    InboundSctpMessageToByteBufDecoder(Associations assoc) {
         super(SctpMessage.class);
         this.assoc = assoc;
     }

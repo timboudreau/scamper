@@ -88,21 +88,17 @@ public final class Sender {
         Checks.nonNegative("sctpChannel", sctpChannel);
         ByteBufAllocator alloc = channel.alloc();
         ByteBuf outbound = alloc.buffer();
-
         if (message.body != null) {
             if (message.body instanceof ByteBuf) {
-//                outbound.writeByte(encoder.magicNumber());
-//                message.type.writeHeader(outbound);
-                outbound.writeBytes((ByteBuf) message.body);
+                outbound = (ByteBuf) message.body;
             } else {
-//                message.type.writeHeader(outbound);
+                outbound = alloc.buffer();
                 try (ByteBufOutputStream out = new ByteBufOutputStream(outbound)) {
                     mapper.writeValue(message.body, out);
                 }
             }
         }
         ByteBuf encodedBuffer = encoder.encode(message.type, outbound, channel);
-//        finalBuffer.writeBytes(outbound);
         NioSctpChannel ch = (NioSctpChannel) channel;
         if (!ch.isOpen()) {
             return ch.newFailedFuture(new ClosedChannelException());
