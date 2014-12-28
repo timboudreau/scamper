@@ -2,19 +2,25 @@ package com.mastfrog.scamper;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.mastfrog.giulius.Dependencies;
 import com.mastfrog.util.Codec;
 import com.mastfrog.util.Streams;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.IOException;
 
 /**
+ * Takes incoming MessageTypeAndBuffer, looks up the handler and processes
+ * them.
  *
  * @author Tim Boudreau
  */
+@Singleton
+@ChannelHandler.Sharable
 final class InboundMessageTypeAndBufferHandler extends SimpleChannelInboundHandler<MessageTypeAndBuffer> {
 
     private final MessageHandlerMapping mapping;

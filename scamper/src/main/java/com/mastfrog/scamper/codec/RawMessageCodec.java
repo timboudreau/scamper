@@ -53,14 +53,13 @@ public class RawMessageCodec extends MessageCodec {
     }
 
     @Override
-    public MessageTypeAndBuffer decode(SctpMessage message, ChannelHandlerContext ctx) {
-        ByteBuf buf = message.content();
+    public MessageTypeAndBuffer decode(ByteBuf buf, ChannelHandlerContext ctx, int sctpChannel) {
         byte first = buf.readByte();
         if (first == magicNumber()) {
             MessageType messageType = messageTypes.forByteBuf(buf);
-            return new MessageTypeAndBuffer(messageType, buf, message.streamIdentifier());
+            return new MessageTypeAndBuffer(messageType, buf, sctpChannel);
         }
-        return new MessageTypeAndBuffer(MessageType.createUnknown(-1, -1), buf.resetReaderIndex(), message.streamIdentifier());
+        return new MessageTypeAndBuffer(MessageType.createUnknown(-1, -1), buf.resetReaderIndex(), sctpChannel);
     }
 
     @Override

@@ -51,7 +51,7 @@ public abstract class MessageCodec {
      * @param ctx The channel context
      * @return A message type and a buffer
      */
-    public abstract MessageTypeAndBuffer decode(SctpMessage message, ChannelHandlerContext ctx);
+    public abstract MessageTypeAndBuffer decode(ByteBuf message, ChannelHandlerContext ctx, int sctpChannel);
 
     /**
      * Encode the passed message type and payload buffer into the format it

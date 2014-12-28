@@ -19,47 +19,30 @@
 package com.mastfrog.scamper;
 
 import com.mastfrog.scamper.codec.MessageCodec;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.mastfrog.giulius.Dependencies;
-import com.mastfrog.util.Codec;
-import com.mastfrog.util.Streams;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.sctp.SctpMessage;
-import java.io.IOException;
 import java.net.SocketAddress;
 
 /**
- * Receives reads and writes of SCTP messages and routes to the appropriate
- * MessageHandlers.
+ * Receives reads and writes of SCTP messages and decodes the message type.
  *
  * @author Tim Boudreau
  */
 @Singleton
 @Sharable
-final class InboundMessageDispatcher extends SimpleChannelInboundHandler<SctpMessage> {
+final class InboundMessageDispatcher extends SimpleChannelInboundHandler<ByteBuf> {
 
-    private final Dependencies deps;
-
-    private final Codec mapper;
-    private final MessageHandlerMapping mapping;
-    private final Sender sender;
     private final ErrorHandler errors;
     private final MessageCodec codec;
     private final Associations assoc;
 
     @Inject
-    public InboundMessageDispatcher(MessageHandlerMapping mapping, Dependencies deps, Codec mapper, Sender sender, ErrorHandler errors, MessageCodec codec, Associations assoc) {
-        this.deps = deps;
-        this.mapper = mapper;
-        this.mapping = mapping;
-        this.sender = sender;
+    public InboundMessageDispatcher(ErrorHandler errors, MessageCodec codec, Associations assoc) {
         this.errors = errors;
         this.codec = codec;
         this.assoc = assoc;
@@ -76,15 +59,11 @@ final class InboundMessageDispatcher extends SimpleChannelInboundHandler<SctpMes
     }
 
     @Override
-    protected void messageReceived(ChannelHandlerContext ctx, SctpMessage sctpMsg) throws Exception {
+    protected void messageReceived(ChannelHandlerContext ctx, ByteBuf sctpMsg) throws Exception {
         assoc.ensureRegistered(ctx);
-        MessageTypeAndBuffer decoded = codec.decode(sctpMsg, ctx);
+        int sctpChannel = ctx.attr(InboundSctpMessageToByteBufAdapter.SCTP_CHANNEL_KEY).get();
+        MessageTypeAndBuffer decoded = codec.decode(sctpMsg, ctx, sctpChannel);
         ctx.fireChannelRead(decoded);
-    }
-
-    @Override
-    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        super.write(ctx, msg, promise); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
