@@ -90,7 +90,7 @@ public class ProtocolModule extends AbstractModule {
         // up and running - Guice doens't allow dynamic bindings
         configureRan = true;
         // Bootstrap the basics
-        install(new NettyBootstrapModule(InboundMessageDispatcher.class, bossThreads, workerThreads, encoding));
+        install(new NettyBootstrapModule(InboundBytesDecoder.class, bossThreads, workerThreads, encoding));
         // Used for a few things
         bind(Random.class).toInstance(rand);
         bind(SecureRandom.class).toInstance(secureRandom);

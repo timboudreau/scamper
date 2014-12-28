@@ -65,9 +65,7 @@ public class CompressingCodecTest {
 //        encoded.resetReaderIndex();
         assertEquals(0, encoded.readerIndex());
 
-        SctpMessage msg = new SctpMessage(0, 0, encoded);
-
-        MessageTypeAndBuffer result = codec.decode(msg, fakeChannelContext());
+        MessageTypeAndBuffer result = codec.decode(encoded, fakeChannelContext(), 0);
         assertEquals(TYPE, result.messageType);
         assertEquals(testData, dataFrom(result.buf));
     }

@@ -43,18 +43,17 @@ final class CompressingCodec extends MessageCodec {
     }
 
     @Override
-    public MessageTypeAndBuffer decode(SctpMessage message, ChannelHandlerContext ctx) {
-        ByteBuf buf = message.content();
+    public MessageTypeAndBuffer decode(ByteBuf buf, ChannelHandlerContext ctx, int sctpChannel) {
         byte magic = buf.readByte();
         if (magic == magicNumber()) {
             try {
-                return decodeImpl(buf, ctx);
+                return decodeImpl(buf, ctx, sctpChannel);
             } catch (Exception ex) {
                 return Exceptions.chuck(ex);
             }
         } else {
             buf.resetReaderIndex();
-            return raw.decode(message, ctx);
+            return raw.decode(buf, ctx, sctpChannel);
         }
     }
 
@@ -88,14 +87,14 @@ final class CompressingCodec extends MessageCodec {
         return MAGIC;
     }
 
-    private MessageTypeAndBuffer decodeImpl(ByteBuf buf, ChannelHandlerContext ctx) throws Exception {
+    private MessageTypeAndBuffer decodeImpl(ByteBuf buf, ChannelHandlerContext ctx, int sctpChannel) throws Exception {
         MessageType messageType = reg.forByteBuf(buf);
         if (messageType.isUnknown()) {
-            return new MessageTypeAndBuffer(messageType, buf.slice());
+            return new MessageTypeAndBuffer(messageType, buf.slice(), sctpChannel);
         }
         ByteBuf bb = ctx.alloc().buffer();
         uncompress(buf.slice(), bb);
-        return new MessageTypeAndBuffer(messageType, bb);
+        return new MessageTypeAndBuffer(messageType, bb, sctpChannel);
     }
 
     protected void compress(ByteBuf in, ByteBuf out) throws IOException {

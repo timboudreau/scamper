@@ -33,8 +33,8 @@ final class AutoCompressCodec extends MessageCodec {
     }
 
     @Override
-    public MessageTypeAndBuffer decode(SctpMessage message, ChannelHandlerContext ctx) {
-        return compress.decode(message, ctx);
+    public MessageTypeAndBuffer decode(ByteBuf message, ChannelHandlerContext ctx, int sctpChannel) {
+        return compress.decode(message, ctx, sctpChannel);
     }
 
     @Override

@@ -35,14 +35,14 @@ import java.net.SocketAddress;
  */
 @Singleton
 @Sharable
-final class InboundMessageDispatcher extends SimpleChannelInboundHandler<ByteBuf> {
+final class InboundBytesDecoder extends SimpleChannelInboundHandler<ByteBuf> {
 
     private final ErrorHandler errors;
     private final MessageCodec codec;
     private final Associations assoc;
 
     @Inject
-    public InboundMessageDispatcher(ErrorHandler errors, MessageCodec codec, Associations assoc) {
+    public InboundBytesDecoder(ErrorHandler errors, MessageCodec codec, Associations assoc) {
         this.errors = errors;
         this.codec = codec;
         this.assoc = assoc;
