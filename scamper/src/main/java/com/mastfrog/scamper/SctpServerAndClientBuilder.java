@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
@@ -37,7 +36,6 @@ import com.mastfrog.util.ConfigurationError;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.sctp.SctpChannelOption;
@@ -62,7 +60,7 @@ import java.util.Set;
  */
 public class SctpServerAndClientBuilder {
 
-    private int port = 8007;
+    private int port = -1;
     private String host = "127.0.0.1";
     private final Set<OptionEntry<?>> options = new LinkedHashSet<>();
     private final Set<OptionEntry<?>> serverOptions = new LinkedHashSet<>();
@@ -77,7 +75,7 @@ public class SctpServerAndClientBuilder {
     private DataEncoding dataEncoding = DataEncoding.BSON;
     private ErrorHandler errors;
     private boolean useLoggingHandler = true;
-    
+
     public SctpServerAndClientBuilder() {
         this("scamper");
     }
@@ -110,13 +108,11 @@ public class SctpServerAndClientBuilder {
         return this;
     }
 
-
     /**
      * Set the way data should be encoded on the wire - BSON, JSON or
-     * JAVA_SERIALIZATION.  Note this has nothing to do with any
-     * encryption or compression that may be layered on top of the data
-     * format.
-     * 
+     * JAVA_SERIALIZATION. Note this has nothing to do with any encryption or
+     * compression that may be layered on top of the data format.
+     *
      * @param encoding The encoding
      * @return this
      */
@@ -190,10 +186,10 @@ public class SctpServerAndClientBuilder {
         Dependencies deps = buildInjector(cmdlineArgs);
         return new ControlImpl<Sender>(deps.getInstance(Sender.class), deps);
     }
-    
+
     /**
      * Add a Guice module that should be used in the application.
-     * 
+     *
      * @param m A guice module
      * @return this
      */
@@ -234,8 +230,9 @@ public class SctpServerAndClientBuilder {
     }
 
     /**
-     * Bind a Netty logging handler which will log events (connect,
-     * active, read, write)
+     * Bind a Netty logging handler which will log events (connect, active,
+     * read, write)
+     *
      * @return this
      */
     public SctpServerAndClientBuilder useLoggingHandler() {
@@ -246,6 +243,7 @@ public class SctpServerAndClientBuilder {
     /**
      * Do not bind a Netty logging handler which will log events (connect,
      * active, read, write)
+     *
      * @return this
      */
     public SctpServerAndClientBuilder noLoggingHandler() {
@@ -376,14 +374,28 @@ public class SctpServerAndClientBuilder {
             }
 
         }
+    }
 
+    /**
+     * Add a settings to be included in Guice &#064Named bindings.
+     *
+     * @param settings The settings
+     * @return this
+     */
+    public SctpServerAndClientBuilder withSettings(Settings settings) {
+        this.settings.add(settings);
+        return this;
     }
 
     private Settings settings(String... cmdlineArgs) throws IOException {
-        SettingsBuilder b = new SettingsBuilder(settingsName)
-                .add("port", "" + port)
-                .add("host", host)
-                .addDefaultLocations();
+        SettingsBuilder b = new SettingsBuilder(settingsName);
+        if (this.host != null) {
+            b.add("host", host);
+        }
+        if (this.port != -1) {
+            b.add("port", this.port + "");
+        }
+        b.addDefaultLocations();
         for (Settings s : this.settings) {
             b.add(s);
         }

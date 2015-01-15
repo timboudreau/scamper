@@ -1,15 +1,14 @@
 package com.mastfrog.scamper.queries;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import com.mastfrog.settings.Settings;
-import com.mastfrog.util.ConfigurationError;
 import com.mastfrog.util.thread.AtomicRoundRobin;
 import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Convenience utility for creating unique IDs that can be identified
@@ -45,7 +44,7 @@ public class Ids {
         int ringSize = settings.getInt("ringSize", 10);
         // Check that we have enough primes to fill the ring with distinct values
         if (ringSize > PRIMES.length) {
-            throw new ConfigurationError("Ring size larger than prime list: " + ringSize + " > " + PRIMES.length);
+            throw new IllegalArgumentException("Ring size larger than prime list: " + ringSize + " > " + PRIMES.length);
         }
         // Use a set to guarantee no duplicates
         Set<Integer> ints = new HashSet<>();
