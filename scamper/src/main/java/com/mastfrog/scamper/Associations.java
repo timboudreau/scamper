@@ -54,10 +54,12 @@ final class Associations {
     private static final AttributeKey<AtomicRoundRobin> NEXT_OUT_STREAM
             = AttributeKey.valueOf(Associations.class, "outstream");
     private static final Logger logger = Logger.getLogger(Associations.class.getName());
+    private final ErrorHandler handler;
 
     @Inject
-    Associations(final ChannelConfigurer config) {
+    Associations(final ChannelConfigurer config, ErrorHandler handler) {
         this.config = config;
+        this.handler = handler;
     }
 
     public ChannelFuture connect(Address address) {
@@ -152,17 +154,23 @@ final class Associations {
         }
 
         public synchronized ChannelFuture connect() {
-            if (future != null) {
-                logger.log(Level.FINER, "Reuse connection {0}:{1}", new Object[]{address.host, address.port});
-                return future;
+            ChannelFuture result;
+            try {
+                if (future != null) {
+                    logger.log(Level.FINER, "Reuse connection {0}:{1}", new Object[]{address.host, address.port});
+                    return future;
+                }
+                logger.log(Level.FINER, "Open connection {0}:{1}", new Object[]{address.host, address.port});
+                Bootstrap bootstrap = new Bootstrap();
+                config.init(bootstrap);
+                //need sync here?
+                result = bootstrap.connect(address.host, address.port);
+                future = result;
+                result.addListener(this);
+            } catch (Exception e) {
+                result = null; // XXX how to create a failed future with no channel?
+                handler.onError(null, e);
             }
-            logger.log(Level.FINER, "Open connection {0}:{1}", new Object[]{address.host, address.port});
-            Bootstrap bootstrap = new Bootstrap();
-            config.init(bootstrap);
-            //need sync here?
-            ChannelFuture result = bootstrap.connect(address.host, address.port);
-            future = result;
-            result.addListener(this);
             return result;
         }
 
