@@ -6,6 +6,8 @@ A toolkit to make it easy to write Java servers and clients that use
 instead of TCP as their network
 transport, using [Netty](http://netty.io) under the hood.
 
+An example chat application can be [found here](https://github.com/timboudreau/scamper-chat).
+
 Servers and clients can register `MessageType`s and `MessageHandler`s that
 receive messages of those types.  Each message sent or received by this
 library has a 3-byte header identifying the message type, which is used to
