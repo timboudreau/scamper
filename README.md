@@ -33,7 +33,7 @@ and the library is available via Maven [as described here](http://timboudreau.co
     <dependency>
         <groupId>com.mastfrog</groupId>
         <artifactId>scamper</artifactId>
-        <version>1.1-dev</version>
+        <version>1.3-dev</version>
     </dependency>
 ```
 
