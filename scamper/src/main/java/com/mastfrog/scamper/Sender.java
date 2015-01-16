@@ -103,6 +103,9 @@ public final class Sender {
         if (!ch.isOpen()) {
             return ch.newFailedFuture(new ClosedChannelException());
         }
+        if (ch.association() == null) {
+            return channel.newFailedFuture(new IOException("Association closed - client has disconnected"));
+        }
         MessageInfo info = MessageInfo.createOutgoing(ch.association(), ch.remoteAddress(), sctpChannel);
         info.unordered(true);
 

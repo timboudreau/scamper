@@ -372,7 +372,6 @@ public class SctpServerAndClientBuilder {
                 }
                 return b.handler(init);
             }
-
         }
     }
 

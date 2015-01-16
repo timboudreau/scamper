@@ -71,14 +71,14 @@ final class Associations {
         }
         return result.connect();
     }
-    
+
     void ensureRegistered(ChannelHandlerContext ctx) {
         Address addr = new Address((InetSocketAddress) ctx.channel().remoteAddress());
         Asso asso = associations.get(addr);
         if (asso != null) {
             return;
         }
-        synchronized(this) {
+        synchronized (this) {
             asso = associations.get(addr);
             if (asso == null) {
                 asso = new Asso(addr, (NioSctpChannel) ctx.channel());

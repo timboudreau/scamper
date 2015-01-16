@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -54,19 +55,29 @@ public class SctpServerTest {
     static final MessageType INBOUND = new MessageType("in", 3, 3);
     static final MessageType OUTBOUND = new MessageType("out", 3, 4);
 
+    String longString;
+    @Before
+    public void before() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 200; i++) {
+            sb.append("abcdefghijklmnopqrstuvwxyz1234567890");
+        }
+        longString = sb.toString();
+    }
+
     @Test
     public void test(Sender sender, CountDownLatch latch, MessageHandlerMapping mapping) throws Throwable {
         assertNotNull(mapping.get(INBOUND));
         assertNotNull(mapping.get(OUTBOUND));
 
-        sender.send(new Address("127.0.0.1", port), INBOUND.newMessage(newThing(1, "Hello")));
+        sender.send(new Address("127.0.0.1", port), INBOUND.newMessage(newThing(1, longString)));
         latch.await(1, TimeUnit.SECONDS);
         errors.maybeThrow();
         assertNotNull(inInstance);
         inInstance.await();
         errors.maybeThrow();
         assertFalse(inInstance.things.isEmpty());
-        assertEquals("Hello", inInstance.things.iterator().next().what);
+        assertEquals(longString, inInstance.things.iterator().next().what);
         assertEquals(1, inInstance.things.iterator().next().index);
         for (int i = 0; outInstance == null && i < 100; i++) {
             Thread.sleep(20);
@@ -77,7 +88,7 @@ public class SctpServerTest {
         System.out.println("done");
         errors.maybeThrow();
         assertFalse(outInstance.strings.isEmpty());
-        assertEquals("Received Hello", outInstance.strings.iterator().next());
+        assertEquals("Received " + longString, outInstance.strings.iterator().next());
     }
 
     static InHandler inInstance;

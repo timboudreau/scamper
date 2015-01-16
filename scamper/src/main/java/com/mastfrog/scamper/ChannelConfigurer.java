@@ -19,13 +19,11 @@
 package com.mastfrog.scamper;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.sctp.SctpChannelOption;
@@ -35,14 +33,13 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 /**
- * Initializes new Bootstrap and ServerBoostrap instances with channel
- * options.  By default, for servers, sets <code>ChannelOption.SO_BACKLOG</code>
- * to 1000 and for clients, sets <code>SctpChannelOption.SCTP_NODELAY</code>
- * to true.
+ * Initializes new Bootstrap and ServerBoostrap instances with channel options.
+ * By default, for servers, sets <code>ChannelOption.SO_BACKLOG</code> to 1000
+ * and for clients, sets <code>SctpChannelOption.SCTP_NODELAY</code> to true.
  * <p>
  * If you use {@link SctpServerAndClientBuilder}, it will provide its own
  * implementation of this which will configure things as you have set them in
- * the builder.  So this class is only likely to be useful if you're not using
+ * the builder. So this class is only likely to be useful if you're not using
  * that but want to set some options.
  *
  * @author Tim Boudreau
@@ -65,6 +62,7 @@ public class ChannelConfigurer {
 
     /**
      * Initialize a server sctp channel
+     *
      * @param b The bootstrap
      * @return The bootstrap
      */
@@ -80,6 +78,7 @@ public class ChannelConfigurer {
 
     /**
      * Initialize a client sctp channel
+     *
      * @param b The bootstrap
      * @return The bootstrap
      */
