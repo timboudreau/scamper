@@ -16,30 +16,43 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.compression;
+package com.mastfrog.scamper.password.crypto;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import com.mastfrog.scamper.MessageTypeRegistry;
 import com.mastfrog.scamper.codec.MessageCodec;
+import com.mastfrog.scamper.codec.RawMessageCodec;
+import com.mastfrog.scamper.compression.CompressionModule;
 import com.mastfrog.settings.Settings;
 
 /**
  *
  * @author Tim Boudreau
  */
-public class CompressionModule extends AbstractModule {
-
-    public static final String SETTINGS_KEY_COMPRESSION_THRESHOLD = "sctp.compress.threshold";
-    public static final int DEFAULT_COMPRESSION_THRESHOLD = 256;
-    public static final String SETTINGS_KEY_GZIP_LEVEL = "sctp.compress.gzip.level";
-    public static final int DEFAULT_GZIP_COMPRESSION_LEVEL = 9;
+public class EncryptionModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(MessageCodec.class).to(AutoCompressCodec.class);
+        bind(MessageCodec.class).toProvider(EncryptingCodecProvider.class);
     }
 
-    public static MessageCodec newCompressingCodec(MessageCodec raw, MessageTypeRegistry reg, Settings settings) {
-        return new CompressingCodec(raw, reg, settings);
+    @Singleton
+    private static class EncryptingCodecProvider implements Provider<MessageCodec> {
+        private final EncryptingCodec codec;
+
+        @Inject
+        EncryptingCodecProvider(RawMessageCodec raw, MessageTypeRegistry reg, Settings settings) {
+            MessageCodec compress = CompressionModule.newCompressingCodec(raw, reg, settings);
+            Encrypter enc = new Encrypter(settings);
+            codec = new EncryptingCodec(compress, reg, enc);
+        }
+
+        @Override
+        public MessageCodec get() {
+            return codec;
+        }
     }
 }

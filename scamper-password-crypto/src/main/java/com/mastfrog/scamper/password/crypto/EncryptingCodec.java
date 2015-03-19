@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package com.mastfrog.scamper.compression;
+package com.mastfrog.scamper.password.crypto;
 
 import com.google.inject.Inject;
 import com.mastfrog.scamper.MessageType;
@@ -24,17 +24,13 @@ import com.mastfrog.scamper.MessageTypeAndBuffer;
 import com.mastfrog.scamper.MessageTypeRegistry;
 import com.mastfrog.scamper.codec.MessageCodec;
 import com.mastfrog.scamper.codec.RawMessageCodec;
-import com.mastfrog.settings.Settings;
 import com.mastfrog.util.Exceptions;
 import com.mastfrog.util.Streams;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import java.io.IOException;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Implements gzip compression over messages with a different magic number for
@@ -42,25 +38,22 @@ import java.util.zip.GZIPOutputStream;
  *
  * @author Tim Boudreau
  */
-final class CompressingCodec extends MessageCodec {
+final class EncryptingCodec extends MessageCodec {
 
     private final MessageCodec raw;
     private static final int MAGIC = 124;
     private final MessageTypeRegistry reg;
-    private final int level;
+    private final Encrypter encrypt;
 
     @Inject
-    CompressingCodec(RawMessageCodec raw, MessageTypeRegistry reg, Settings settings) {
-        this((MessageCodec) raw, reg, settings);
+    EncryptingCodec(RawMessageCodec raw, MessageTypeRegistry reg, Encrypter encrypt) {
+        this((MessageCodec) raw, reg, encrypt);
     }
 
-    public CompressingCodec(MessageCodec raw, MessageTypeRegistry reg, Settings settings) {
+    public EncryptingCodec(MessageCodec raw, MessageTypeRegistry reg, Encrypter encrypt) {
         this.raw = raw;
         this.reg = reg;
-        level = settings.getInt(CompressionModule.SETTINGS_KEY_GZIP_LEVEL, CompressionModule.DEFAULT_GZIP_COMPRESSION_LEVEL);
-        if (level < 0 || level > 9) {
-            throw new IllegalArgumentException(CompressionModule.SETTINGS_KEY_GZIP_LEVEL + " must be between 0 and 9 but was " + level);
-        }
+        this.encrypt = encrypt;
     }
 
     @Override
@@ -119,18 +112,16 @@ final class CompressingCodec extends MessageCodec {
     }
 
     protected void compress(ByteBuf in, ByteBuf out) throws IOException {
-        try (GZIPOutputStream outStream = new GZIPOutputStream(new ByteBufOutputStream(out), level)) {
-            try (ByteBufInputStream inStream = new ByteBufInputStream(in)) {
-                Streams.copy(inStream, outStream, 512);
-            }
-        }
+        byte[] toRead = new byte[in.readableBytes()];
+        in.readBytes(toRead);
+        byte[] outBound = encrypt.encrypt(toRead);
+        out.writeBytes(outBound);
     }
 
     protected void uncompress(ByteBuf in, ByteBuf out) throws IOException {
-        try (GZIPInputStream ins = new GZIPInputStream(new ByteBufInputStream(in))) {
-            try (ByteBufOutputStream outs = new ByteBufOutputStream(out)) {
-                Streams.copy(ins, outs, 512);
-            }
-        }
+        byte[] toWrite = new byte[in.readableBytes()];
+        in.readBytes(toWrite);
+        byte[] outBound = encrypt.decrypt(toWrite);
+        out.writeBytes(outBound);
     }
 }
