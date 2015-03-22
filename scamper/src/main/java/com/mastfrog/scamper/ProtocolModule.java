@@ -43,6 +43,10 @@ public class ProtocolModule extends AbstractModule {
     private final int bossThreads;
     private final int workerThreads;
     private final DataEncoding encoding;
+    public static final String GUICE_BINDING_SCAMPER_CODEC = "scamper";
+    public static final String GUICE_BINDING_SCAMPER_BOSS_THREADS = "scamper-boss";
+    public static final String GUICE_BINDING_SCAMPER_WORKER_THREADS = "scamper-worker";
+    public static final String SETTINGS_KEY_SCTP_PORT = "sctp.port";
 
     public ProtocolModule() {
         this(1, 8, DataEncoding.BSON);
@@ -59,8 +63,14 @@ public class ProtocolModule extends AbstractModule {
     void addEntry(Entry entry) {
         bind(entry.message, entry.type);
     }
-
+    
     private final List<Entry> entries = new LinkedList<>();
+    
+    private final List<com.fasterxml.jackson.databind.Module> jacksonModules = new LinkedList<>();
+    public ProtocolModule withJacksonModule(com.fasterxml.jackson.databind.Module module) {
+        jacksonModules.add(module);
+        return this;
+    }
 
     /**
      * Add a handler type which will receive messages that match the passed
@@ -90,7 +100,7 @@ public class ProtocolModule extends AbstractModule {
         // up and running - Guice doens't allow dynamic bindings
         configureRan = true;
         // Bootstrap the basics
-        install(new NettyBootstrapModule(InboundBytesDecoder.class, bossThreads, workerThreads, encoding));
+        install(new NettyBootstrapModule(InboundBytesDecoder.class, bossThreads, workerThreads, encoding, jacksonModules));
         // Used for a few things
         bind(Random.class).toInstance(rand);
         bind(SecureRandom.class).toInstance(secureRandom);

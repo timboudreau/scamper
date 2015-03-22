@@ -26,6 +26,7 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Names;
 import com.mastfrog.giulius.tests.GuiceRunner;
 import com.mastfrog.giulius.tests.TestWith;
+import static com.mastfrog.scamper.ProtocolModule.SETTINGS_KEY_SCTP_PORT;
 import com.mastfrog.scamper.SctpServerTest.BsonModule;
 import com.mastfrog.scamper.SctpServerTest.JsonModule;
 import com.mastfrog.scamper.SctpServerTest.M;
@@ -197,7 +198,7 @@ public class SctpServerTest {
                     .bind(INBOUND, InHandler.class)
                     .bind(OUTBOUND, OutHandler.class)
             );
-            bind(String.class).annotatedWith(Names.named("port")).toInstance("" + (port = new Random().nextInt(500) + 8000));
+            bind(String.class).annotatedWith(Names.named(SETTINGS_KEY_SCTP_PORT)).toInstance("" + (port = new Random().nextInt(500) + 8000));
             bind(Starter.class).asEagerSingleton();
             bind(ErrorHandler.class).toInstance(errors);
             bind(CountDownLatch.class).toInstance(new CountDownLatch(1));

@@ -21,6 +21,9 @@ package com.mastfrog.scamper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_BOSS_THREADS;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_CODEC;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_WORKER_THREADS;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
@@ -53,7 +56,7 @@ public class ChannelConfigurer {
     protected final ByteBufAllocator alloc;
 
     @Inject
-    protected ChannelConfigurer(@Named(value = "boss") EventLoopGroup boss, @Named("worker") EventLoopGroup worker, Init init, ByteBufAllocator alloc) {
+    protected ChannelConfigurer(@Named(GUICE_BINDING_SCAMPER_BOSS_THREADS) EventLoopGroup boss, @Named(GUICE_BINDING_SCAMPER_WORKER_THREADS) EventLoopGroup worker, Init init, @Named(GUICE_BINDING_SCAMPER_CODEC) ByteBufAllocator alloc) {
         this.group = boss;
         this.worker = worker;
         this.init = init;

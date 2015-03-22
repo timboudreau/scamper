@@ -18,6 +18,7 @@
  */
 package com.mastfrog.scamper;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.InetSocketAddress;
 import java.util.Objects;
@@ -31,7 +32,8 @@ public class Address {
     public final String host;
     public final int port;
 
-    public Address(@JsonProperty(value = "origin") String origin, @JsonProperty(value = "port") int port) {
+    @JsonCreator
+    public Address(@JsonProperty("origin") String origin, @JsonProperty("port") int port) {
         this.host = origin;
         this.port = port;
     }

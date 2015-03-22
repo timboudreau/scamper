@@ -21,6 +21,8 @@ package com.mastfrog.scamper;
 import com.mastfrog.scamper.codec.MessageCodec;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_CODEC;
 import com.mastfrog.util.Checks;
 import com.mastfrog.util.Codec;
 import com.sun.nio.sctp.MessageInfo;
@@ -51,7 +53,7 @@ public final class Sender {
     private static final Logger logger = Logger.getLogger(Sender.class.getName());
 
     @Inject
-    public Sender(Associations associations, Codec bsonJson, MessageCodec codec) {
+    public Sender(Associations associations, @Named(GUICE_BINDING_SCAMPER_CODEC) Codec bsonJson, MessageCodec codec) {
         this.associations = associations;
         this.mapper = bsonJson;
         this.encoder = codec;

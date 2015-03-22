@@ -21,6 +21,7 @@ package com.mastfrog.scamper;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
+import static com.mastfrog.scamper.ProtocolModule.SETTINGS_KEY_SCTP_PORT;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -41,7 +42,7 @@ public final class SctpClient {
     private static final Logger logger = Logger.getLogger(SctpClient.class.getName());
 
     @Inject
-    SctpClient(@Named("host") String host, @Named("port") int port, Provider<ChannelHandlerAdapter> handler, ChannelConfigurer configurer) {
+    SctpClient(@Named("host") String host, @Named(SETTINGS_KEY_SCTP_PORT) int port, Provider<ChannelHandlerAdapter> handler, ChannelConfigurer configurer) {
         this.host = host;
         this.port = port;
         this.configurer = configurer;

@@ -20,14 +20,15 @@ package com.mastfrog.scamper.codec;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.mastfrog.scamper.MessageType;
 import com.mastfrog.scamper.MessageTypeAndBuffer;
 import com.mastfrog.scamper.MessageTypeRegistry;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_CODEC;
 import com.mastfrog.util.Codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.sctp.SctpMessage;
 
 /**
  * Encoder which simply sends the raw message.
@@ -42,7 +43,7 @@ public class RawMessageCodec extends MessageCodec {
     public static final int MAGIC = 123;
 
     @Inject
-    protected RawMessageCodec(Codec jsonBson, MessageTypeRegistry messageTypes) {
+    protected RawMessageCodec(@Named(GUICE_BINDING_SCAMPER_CODEC) Codec jsonBson, MessageTypeRegistry messageTypes) {
         this.jsonBson = jsonBson;
         this.messageTypes = messageTypes;
     }

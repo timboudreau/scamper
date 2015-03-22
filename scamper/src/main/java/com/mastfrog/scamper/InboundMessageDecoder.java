@@ -3,7 +3,9 @@ package com.mastfrog.scamper;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.mastfrog.giulius.Dependencies;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_CODEC;
 import com.mastfrog.util.Codec;
 import com.mastfrog.util.Streams;
 import io.netty.buffer.ByteBuf;
@@ -27,7 +29,7 @@ final class InboundMessageDecoder extends SimpleChannelInboundHandler<MessageTyp
     private final Codec mapper;
 
     @Inject
-    InboundMessageDecoder(MessageHandlerMapping mapping, Dependencies deps, Codec mapper) {
+    InboundMessageDecoder(MessageHandlerMapping mapping, Dependencies deps, @Named(GUICE_BINDING_SCAMPER_CODEC) Codec mapper) {
         this.mapping = mapping;
         this.deps = deps;
         this.mapper = mapper;

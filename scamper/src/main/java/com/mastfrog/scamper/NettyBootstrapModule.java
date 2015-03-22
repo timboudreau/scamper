@@ -24,6 +24,9 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.mastfrog.giulius.ShutdownHookRegistry;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_BOSS_THREADS;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_CODEC;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_WORKER_THREADS;
 import com.mastfrog.util.Codec;
 import de.undercouch.bson4jackson.BsonFactory;
 import io.netty.buffer.ByteBufAllocator;
@@ -36,6 +39,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 /**
  * Does the basics of initializing various Netty classes, and ensures that if
@@ -53,12 +57,14 @@ final class NettyBootstrapModule extends AbstractModule {
     private final int bossThreads;
     private final int workerThreads;
     private final DataEncoding encoding;
+    private final List<com.fasterxml.jackson.databind.Module> jacksonModules;
 
-    public NettyBootstrapModule(Class<? extends ChannelHandlerAdapter> adap, int bossThreads, int workerThreads, DataEncoding encoding) {
+    public NettyBootstrapModule(Class<? extends ChannelHandlerAdapter> adap, int bossThreads, int workerThreads, DataEncoding encoding, List<com.fasterxml.jackson.databind.Module> jacksonModules) {
         this.adap = adap;
         this.bossThreads = bossThreads;
         this.workerThreads = workerThreads;
         this.encoding = encoding;
+        this.jacksonModules = jacksonModules;
     }
 
     @Override
@@ -68,25 +74,32 @@ final class NettyBootstrapModule extends AbstractModule {
             case BSON:
                 BsonFactory bsonFactory = new BsonFactory();
                 bind(BsonFactory.class).toInstance(bsonFactory);
-                bind(ObjectMapper.class).toInstance(new ObjectMapper(bsonFactory));
-                bind(Codec.class).to(CodecImpl.class);
+                ObjectMapper mapper = new ObjectMapper(bsonFactory);
+                for (com.fasterxml.jackson.databind.Module m : jacksonModules) {
+                    mapper.registerModule(m);
+                }
+                bind(ObjectMapper.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_CODEC)).toInstance(mapper);
+                bind(Codec.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_CODEC)).to(CodecImpl.class);
                 break;
             case JSON:
-                bind(ObjectMapper.class).toInstance(new ObjectMapper());
-                bind(Codec.class).to(CodecImpl.class);
+                ObjectMapper mapper2 = new ObjectMapper();
+                for (com.fasterxml.jackson.databind.Module m : jacksonModules) {
+                    mapper2.registerModule(m);
+                }
+                bind(ObjectMapper.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_CODEC)).toInstance(mapper2);
+                bind(Codec.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_CODEC)).to(CodecImpl.class);
                 break;
             case JAVA_SERIALIZATION :
-                bind(Codec.class).to(SerializationCodec.class);
+                bind(Codec.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_CODEC)).to(SerializationCodec.class);
                 break;
             default :
                 throw new AssertionError(encoding);
-
         }
         bind(ChannelHandlerAdapter.class).annotatedWith(Names.named("dispatcher")).to(adap);
         bind(ChannelHandlerAdapter.class).annotatedWith(Names.named("processor")).to(InboundMessageDecoder.class);
-        bind(EventLoopGroup.class).annotatedWith(Names.named("boss")).toInstance(new NioEventLoopGroup(bossThreads));
-        bind(EventLoopGroup.class).annotatedWith(Names.named("worker")).toInstance(workerThreads == -1 ? new NioEventLoopGroup() : new NioEventLoopGroup(workerThreads));
-        bind(ByteBufAllocator.class).toInstance(new PooledByteBufAllocator(true));
+        bind(EventLoopGroup.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_BOSS_THREADS)).toInstance(new NioEventLoopGroup(bossThreads));
+        bind(EventLoopGroup.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_WORKER_THREADS)).toInstance(workerThreads == -1 ? new NioEventLoopGroup() : new NioEventLoopGroup(workerThreads));
+        bind(ByteBufAllocator.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_CODEC)).toInstance(new PooledByteBufAllocator(true));
         bind(ShutdownHandler.class).asEagerSingleton();
     }
 
@@ -96,7 +109,7 @@ final class NettyBootstrapModule extends AbstractModule {
         private final EventLoopGroup worker;
 
         @Inject
-        ShutdownHandler(@Named("boss") EventLoopGroup boss, @Named("worker") EventLoopGroup worker, ShutdownHookRegistry reg) {
+        ShutdownHandler(@Named(GUICE_BINDING_SCAMPER_BOSS_THREADS) EventLoopGroup boss, @Named(GUICE_BINDING_SCAMPER_WORKER_THREADS) EventLoopGroup worker, ShutdownHookRegistry reg) {
             reg.add(this);
             this.boss = boss;
             this.worker = worker;

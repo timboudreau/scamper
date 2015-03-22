@@ -29,6 +29,10 @@ import com.google.inject.name.Names;
 import com.mastfrog.giulius.Dependencies;
 import com.mastfrog.giulius.DependenciesBuilder;
 import com.mastfrog.guicy.annotations.Namespace;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_BOSS_THREADS;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_CODEC;
+import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_WORKER_THREADS;
+import static com.mastfrog.scamper.ProtocolModule.SETTINGS_KEY_SCTP_PORT;
 import com.mastfrog.settings.Settings;
 import com.mastfrog.settings.SettingsBuilder;
 import com.mastfrog.util.Checks;
@@ -44,6 +48,7 @@ import io.netty.channel.sctp.nio.NioSctpServerChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -75,9 +80,15 @@ public class SctpServerAndClientBuilder {
     private DataEncoding dataEncoding = DataEncoding.BSON;
     private ErrorHandler errors;
     private boolean useLoggingHandler = true;
+    private final List<com.fasterxml.jackson.databind.Module> jacksonModules = new LinkedList<>();
 
     public SctpServerAndClientBuilder() {
         this("scamper");
+    }
+    
+    public SctpServerAndClientBuilder withJacksonModule(com.fasterxml.jackson.databind.Module... modules) {
+        jacksonModules.addAll(Arrays.asList(modules));
+        return this;
     }
 
     /**
@@ -203,6 +214,9 @@ public class SctpServerAndClientBuilder {
         for (ProtocolModule.Entry e : this.bindings) {
             m.addEntry(e);
         }
+        for (com.fasterxml.jackson.databind.Module jm : jacksonModules) {
+            m = m.withJacksonModule(jm);
+        }
         return m;
     }
 
@@ -214,6 +228,11 @@ public class SctpServerAndClientBuilder {
         builder.add(protoModule());
         builder.add(new Mod(options, serverOptions, clientOptions, errors, useLoggingHandler));
         return builder;
+    }
+
+    public Module buildModule() {
+        return new CombinedModule(modules, protoModule(), 
+                new Mod(options, serverOptions, clientOptions, errors, useLoggingHandler));
     }
 
     /**
@@ -317,14 +336,14 @@ public class SctpServerAndClientBuilder {
             private final boolean useLoggingHandler;
 
             @Inject
-            public Config(@Named(value = "boss") EventLoopGroup boss,
-                    @Named("worker") EventLoopGroup worker,
+            public Config(@Named(value = GUICE_BINDING_SCAMPER_BOSS_THREADS) EventLoopGroup boss,
+                    @Named(GUICE_BINDING_SCAMPER_WORKER_THREADS) EventLoopGroup worker,
                     Init init,
                     @Named("both") Set<OptionEntry<?>> bothOptions,
                     @Named("server") Set<OptionEntry<?>> severOptions,
                     @Named("client") Set<OptionEntry<?>> clientOptions,
                     @Named("_log") boolean useLoggingHandler,
-                    ByteBufAllocator alloc
+                    @Named(GUICE_BINDING_SCAMPER_CODEC) ByteBufAllocator alloc
             ) {
                 super(boss, worker, init, alloc);
                 this.bothOptions = ImmutableSet.copyOf(bothOptions);
@@ -392,7 +411,7 @@ public class SctpServerAndClientBuilder {
             b.add("host", host);
         }
         if (this.port != -1) {
-            b.add("port", this.port + "");
+            b.add(SETTINGS_KEY_SCTP_PORT, this.port + "");
         }
         b.addDefaultLocations();
         for (Settings s : this.settings) {
@@ -564,6 +583,27 @@ public class SctpServerAndClientBuilder {
 
         public String toString() {
             return option + "=" + value;
+        }
+    }
+
+    private static class CombinedModule extends AbstractModule {
+        private final List<Module> modules;
+        private final Module proto;
+        private final Mod mod;
+
+        public CombinedModule(List<Module>modules, Module proto, Mod mod) {
+            this.modules = modules;
+            this.proto = proto;
+            this.mod = mod;
+        }
+
+        @Override
+        protected void configure() {
+            for (Module m : modules) {
+                install(m);
+            }
+            install(proto);
+            install(mod);
         }
     }
 }
