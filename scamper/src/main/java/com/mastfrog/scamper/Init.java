@@ -55,4 +55,19 @@ final class Init extends ChannelInitializer<SctpChannel> {
         pipeline.addLast(processor.get());
         pipeline.addLast(proc.get());
     }
+    
+    ChannelInitializer<SctpChannel> withAddress(final Address addr) {
+        return new ChannelInitializer<SctpChannel>() {
+
+            @Override
+            protected void initChannel(SctpChannel ch) throws Exception {
+                ch.bindAddress(addr.toSocketAddress().getAddress());
+                for (Address secondary : addr) {
+                    System.out.println("Bind secondary " + secondary);
+                    ch.bindAddress(secondary.toSocketAddress().getAddress());
+                }
+                Init.this.initChannel(ch);
+            }
+        };
+    }
 }

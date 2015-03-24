@@ -22,12 +22,15 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import static com.mastfrog.scamper.ProtocolModule.SETTINGS_KEY_SCTP_PORT;
+import com.mastfrog.settings.Settings;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,16 +39,26 @@ import java.util.logging.Logger;
  */
 public final class SctpClient {
 
-    private final String host;
-    private final int port;
+    private final Address address;
     private final ChannelConfigurer configurer;
     private static final Logger logger = Logger.getLogger(SctpClient.class.getName());
+    
+    public static final String SETTINGS_KEY_SECONDARY_ADDRESSES = "sctp.peers";
 
     @Inject
-    SctpClient(@Named("host") String host, @Named(SETTINGS_KEY_SCTP_PORT) int port, Provider<ChannelHandlerAdapter> handler, ChannelConfigurer configurer) {
-        this.host = host;
-        this.port = port;
+    SctpClient(@Named("host") String host, @Named(SETTINGS_KEY_SCTP_PORT) int port, Provider<ChannelHandlerAdapter> handler, ChannelConfigurer configurer, Settings settings) {
         this.configurer = configurer;
+        String peers = settings.getString(SETTINGS_KEY_SECONDARY_ADDRESSES);
+        if (peers != null) {
+            List<Address> secondaries = new ArrayList<>();
+            for (String a : peers.split(",")) {
+                a = a.trim();
+                secondaries.add(new Address(a));
+            }
+            this.address = new Address(host, port, secondaries.toArray(new Address[secondaries.size()]));
+        } else {
+            this.address = new Address(host, port);
+        }
     }
 
     /**
@@ -61,20 +74,23 @@ public final class SctpClient {
         // Configure the client.
         Bootstrap b = new Bootstrap();
 
-        configurer.init(b)
+        configurer.init(b, address)
                 .handler(new LoggingHandler(LogLevel.INFO));
 
-        logger.log(Level.INFO, "Start for {0} on {1}", new Object[]{host, port});
+        logger.log(Level.INFO, "Start for {0} on {1}", new Object[]{address.host, address.port});
         // Start the client.
-        ChannelFuture f = b.connect(host, port);
+        ChannelFuture f = b.connect(address.host, address.port);
         if (logger.isLoggable(Level.FINE)) {
             f.addListener(new ChannelFutureListener() {
 
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
-                    logger.log(Level.FINE, "Connect to {0}:{1}", new Object[]{host, port});
+                    if (future.cause() != null) {
+                        logger.log(Level.SEVERE, "Connect failed to " + address, future.cause());
+                        return;
+                    }
+                    logger.log(Level.FINE, "Connected to {0}:{1}", new Object[]{address.host, address.port});
                 }
-
             });
         }
         f.sync();

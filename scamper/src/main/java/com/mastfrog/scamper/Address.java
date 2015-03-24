@@ -20,34 +20,81 @@ package com.mastfrog.scamper;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mastfrog.util.Checks;
+import com.mastfrog.util.collections.CollectionUtils;
+import com.mastfrog.util.thread.AutoCloseThreadLocal;
+import com.mastfrog.util.thread.QuietAutoCloseable;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Objects;
 
 /**
- * Wrapper for an address, serializable as JSON.
+ * Wrapper for an address, serializable as JSON, and capable of
+ * representing a multi-homed set of addresses.
  *
  * @author Tim Boudreau
  */
-public class Address {
+public class Address implements Iterable<Address> {
+
     public final String host;
     public final int port;
+    public final Address[] secondaries;
 
     @JsonCreator
-    public Address(@JsonProperty("origin") String origin, @JsonProperty("port") int port) {
-        this.host = origin;
+    public Address(@JsonProperty("host") String host, @JsonProperty("port") int port, @JsonProperty("secondaries") Address... secondaries) {
+        Checks.notNull("host", host);
+        Checks.nonNegative("port", port);
+        Checks.notNull("secondaries", secondaries);
+        Checks.noNullElements("secondaries", secondaries);
+        this.host = host;
         this.port = port;
+        this.secondaries = secondaries == null ? new Address[0] : secondaries;
     }
-    
+
+    public Address(InetSocketAddress a, Address... secondaries) {
+        this(a.getAddress().getHostAddress(), a.getPort(), secondaries);
+    }
+
     public Address(InetSocketAddress a) {
         this(a.getAddress().getHostAddress(), a.getPort());
     }
-    
+
     public InetSocketAddress toSocketAddress() {
         return InetSocketAddress.createUnresolved(host, port);
     }
 
+    public Address(String hostColonPort) {
+        Checks.notNull("hostColonPort", hostColonPort);
+        String[] parts = hostColonPort.split(":");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("SHould be in format 'host:port'");
+        }
+        host = parts[0];
+        port = Integer.parseInt(parts[1]);
+        if (port <= 0) {
+            throw new IllegalArgumentException("Port < 0: " + port);
+        }
+        if (port > 65535) {
+            throw new IllegalArgumentException("Port > 65535");
+        }
+        this.secondaries = new Address[0];
+    }
+
     public String toString() {
-        return host + ":" + port;
+        StringBuilder sb = new StringBuilder();
+        sb.append(host).append(':').append(port);
+        if (secondaries.length > 0) {
+            sb.append('{');
+            for (Iterator<Address> it = CollectionUtils.toIterator(secondaries); it.hasNext();) {
+                sb.append(it.next());
+                if (it.hasNext()) {
+                    sb.append(',');
+                }
+            }
+            sb.append('}');
+        }
+        return sb.toString();
     }
 
     @Override
@@ -55,6 +102,7 @@ public class Address {
         int hash = 7;
         hash = 37 * hash + Objects.hashCode(this.host);
         hash = 37 * hash + this.port;
+        hash = 37 * hash + Arrays.hashCode(secondaries);
         return hash;
     }
 
@@ -70,6 +118,14 @@ public class Address {
         if (!Objects.equals(this.host, other.host)) {
             return false;
         }
+        if (!Arrays.equals(secondaries, other.secondaries)) {
+            return false;
+        }
         return this.port == other.port;
+    }
+
+    @Override
+    public Iterator<Address> iterator() {
+        return CollectionUtils.toIterator(secondaries);
     }
 }

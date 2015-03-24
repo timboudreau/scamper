@@ -27,6 +27,7 @@ import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.sctp.nio.NioSctpChannel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
@@ -94,6 +95,25 @@ final class Associations {
     public void register(Channel channel) {
         getForKey(NEXT_OUT_STREAM, channel);
     }
+    
+    public boolean disconnectIfConnected(Address a) {
+        Asso asso;
+        synchronized(this) {
+            asso = associations.get(a);
+        }
+        boolean disconnected = false;
+        if (asso != null) {
+            ChannelFuture fut = asso.future;
+            if (fut != null) {
+                Channel ch = fut.channel();
+                if (ch != null && ch.isOpen()) {
+                    ch.close();
+                    disconnected = true;
+                }
+            }
+        }
+        return disconnected;
+    }
 
     private int getForKey(AttributeKey<AtomicRoundRobin> key, Channel channel) {
         Attribute<AtomicRoundRobin> attr = channel.attr(key);
@@ -156,19 +176,25 @@ final class Associations {
         public synchronized ChannelFuture connect() {
             ChannelFuture result;
             try {
-                if (future != null) {
+                if (future != null /* && future.channel().isOpen()*/) {
                     logger.log(Level.FINER, "Reuse connection {0}:{1}", new Object[]{address.host, address.port});
                     return future;
                 }
                 logger.log(Level.FINER, "Open connection {0}:{1}", new Object[]{address.host, address.port});
                 Bootstrap bootstrap = new Bootstrap();
-                config.init(bootstrap);
+                config.init(bootstrap, address);
+                bootstrap.remoteAddress(address.toSocketAddress());
                 //need sync here?
-                result = bootstrap.connect(address.host, address.port);
+//                result = bootstrap.connect(address.host, address.port);
+                result = bootstrap.connect();
+                for (Address a : address) {
+                    bootstrap.connect(a.toSocketAddress());
+                }
                 future = result;
                 result.addListener(this);
             } catch (Exception e) {
-                result = null; // XXX how to create a failed future with no channel?
+                e.printStackTrace();
+                result = new FailedFuture(e);
                 handler.onError(null, e);
             }
             return result;
@@ -198,10 +224,18 @@ final class Associations {
                 channel.attr(NEXT_IN_STREAM).set(inStreams);
                 channel.attr(NEXT_OUT_STREAM).set(outStreams);
             }
+            System.out.println("LOCAL ADDRS: " + channel.allLocalAddresses());
+            System.out.println("REMOTE ADDRS: " + channel.allRemoteAddresses());
+            System.out.println("ASSOC: " + channel.association());
             channel.closeFuture().addListener(new ChannelFutureListener() {
 
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
+                    System.out.println("Connection to " + address + " closed");
+//                    if (address.iterator().hasNext()) {
+//                        System.out.println("Leaving association in place");
+//                        return;
+//                    }
                     logger.log(Level.FINER, "Closed connection {0}:{1}", new Object[]{address.host, address.port});
                     synchronized (Associations.this) {
                         if (Associations.this.associations.get(address) == Asso.this) {
@@ -253,6 +287,13 @@ final class Associations {
                     }
                 }
             }
+        }
+    }
+    
+    static class FailedFuture extends DefaultChannelPromise {
+        public FailedFuture(Throwable t) {
+            super(null);
+            setFailure(t);
         }
     }
 }

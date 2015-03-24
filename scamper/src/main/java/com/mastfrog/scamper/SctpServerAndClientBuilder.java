@@ -375,7 +375,7 @@ public class SctpServerAndClientBuilder {
             }
 
             @Override
-            public Bootstrap init(Bootstrap b) {
+            public Bootstrap init(Bootstrap b, Address address) {
                 // Set default options - the builder can override them
                 b = b.group(group).channel(NioSctpChannel.class)
                         .option(SctpChannelOption.SCTP_NODELAY, true)
@@ -389,7 +389,7 @@ public class SctpServerAndClientBuilder {
                 for (OptionEntry<?> entry : clientOptions) {
                     b = entry.apply(b);
                 }
-                return b.handler(init);
+                return b.handler(init.withAddress(address));
             }
         }
     }

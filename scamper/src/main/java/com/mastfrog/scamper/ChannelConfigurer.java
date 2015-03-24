@@ -27,6 +27,7 @@ import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_WORKER_T
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.sctp.SctpChannelOption;
@@ -85,12 +86,12 @@ public class ChannelConfigurer {
      * @param b The bootstrap
      * @return The bootstrap
      */
-    protected Bootstrap init(Bootstrap b) {
+    protected Bootstrap init(Bootstrap b, Address address) {
         b = b.group(group).channel(NioSctpChannel.class)
                 .option(SctpChannelOption.SCTP_NODELAY, true)
                 .option(ChannelOption.ALLOCATOR, alloc)
                 .handler(new LoggingHandler(LogLevel.INFO))
-                .handler(init);
+                .handler(init.withAddress(address));
         return b;
     }
 }
