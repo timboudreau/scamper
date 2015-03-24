@@ -20,6 +20,7 @@ package com.mastfrog.scamper;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.mastfrog.util.Exceptions;
 import com.mastfrog.util.thread.AtomicRoundRobin;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -27,10 +28,13 @@ import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.sctp.nio.NioSctpChannel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import java.net.InetSocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.util.HashMap;
@@ -290,10 +294,30 @@ final class Associations {
         }
     }
     
-    static class FailedFuture extends DefaultChannelPromise {
+    static class FailedFuture extends DefaultChannelPromise implements Future<Void> {
         public FailedFuture(Throwable t) {
             super(null);
             setFailure(t);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public ChannelPromise addListener(GenericFutureListener<? extends Future<? super Void>> listener) {
+            GenericFutureListener gf = listener;
+            try {
+                gf.operationComplete(this);
+            } catch (Exception ex) {
+                Exceptions.chuck(ex);
+            }
+            return this;
+        }
+
+        @Override
+        public ChannelPromise addListeners(GenericFutureListener<? extends Future<? super Void>>... listeners) {
+            for (GenericFutureListener<? extends Future<? super Void>> f : listeners) {
+                addListeners(f);
+            }
+            return this;
         }
     }
 }
