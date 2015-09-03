@@ -47,6 +47,7 @@ public class ProtocolModule extends AbstractModule {
     public static final String GUICE_BINDING_SCAMPER_BOSS_THREADS = "scamper-boss";
     public static final String GUICE_BINDING_SCAMPER_WORKER_THREADS = "scamper-worker";
     public static final String SETTINGS_KEY_SCTP_PORT = "sctp.port";
+    public static final String SETTINGS_KEY_SCTP_HOST = "sctp.host";
 
     public ProtocolModule() {
         this(1, 8, DataEncoding.BSON);

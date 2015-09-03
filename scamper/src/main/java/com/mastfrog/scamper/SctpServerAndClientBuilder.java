@@ -32,6 +32,7 @@ import com.mastfrog.guicy.annotations.Namespace;
 import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_BOSS_THREADS;
 import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_CODEC;
 import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_WORKER_THREADS;
+import static com.mastfrog.scamper.ProtocolModule.SETTINGS_KEY_SCTP_HOST;
 import static com.mastfrog.scamper.ProtocolModule.SETTINGS_KEY_SCTP_PORT;
 import com.mastfrog.settings.Settings;
 import com.mastfrog.settings.SettingsBuilder;
@@ -408,6 +409,7 @@ public class SctpServerAndClientBuilder {
     private Settings settings(String... cmdlineArgs) throws IOException {
         SettingsBuilder b = new SettingsBuilder(settingsName);
         if (this.host != null) {
+            b.add(SETTINGS_KEY_SCTP_HOST, host);
             b.add("host", host);
         }
         if (this.port != -1) {

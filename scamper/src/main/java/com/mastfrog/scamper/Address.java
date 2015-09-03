@@ -22,16 +22,17 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mastfrog.util.Checks;
 import com.mastfrog.util.collections.CollectionUtils;
-import com.mastfrog.util.thread.AutoCloseThreadLocal;
-import com.mastfrog.util.thread.QuietAutoCloseable;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 /**
- * Wrapper for an address, serializable as JSON, and capable of
- * representing a multi-homed set of addresses.
+ * Wrapper for an address, serializable as JSON, and capable of representing a
+ * multi-homed set of addresses.
  *
  * @author Tim Boudreau
  */
@@ -52,12 +53,37 @@ public class Address implements Iterable<Address> {
         this.secondaries = secondaries == null ? new Address[0] : secondaries;
     }
 
+    public Address(Address... addrs) {
+        if (addrs.length == 0) {
+            throw new IllegalArgumentException("No addresses");
+        }
+        this.host = addrs[0].host;
+        this.port = addrs[0].port;
+        secondaries = new Address[addrs.length - 1];
+        System.arraycopy(addrs, 1, secondaries, 0, secondaries.length);
+    }
+
+    public Address(Collection<Address> addrs) {
+        this(addrs.toArray(new Address[addrs.size()]));
+    }
+
     public Address(InetSocketAddress a, Address... secondaries) {
         this(a.getAddress().getHostAddress(), a.getPort(), secondaries);
     }
 
     public Address(InetSocketAddress a) {
         this(a.getAddress().getHostAddress(), a.getPort());
+    }
+
+    public List<Address> toList() {
+        List<Address> result = new ArrayList<>(secondaries.length + 1);
+        result.add(new Address(host, port));
+        result.addAll(Arrays.asList(secondaries));
+        return result;
+    }
+
+    public InetSocketAddress resolve() {
+        return new InetSocketAddress(host, port);
     }
 
     public InetSocketAddress toSocketAddress() {

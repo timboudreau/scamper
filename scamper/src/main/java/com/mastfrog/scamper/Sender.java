@@ -185,6 +185,11 @@ public final class Sender {
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.cause() == null) {
                     logger.log(Level.FINE, "Got back connection {0} for {1}", new Object[]{future.channel().remoteAddress(), address});
+                } else {
+                    if (l != null) {
+                        l.operationComplete(future);
+                    }
+                    return;
                 }
                 ChannelFuture fut = send(future.channel(), message, sctpChannel);
                 if (l != null) {

@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import com.mastfrog.giulius.ShutdownHookRegistry;
+import static com.mastfrog.scamper.ProtocolModule.SETTINGS_KEY_SCTP_HOST;
 import static com.mastfrog.scamper.ProtocolModule.SETTINGS_KEY_SCTP_PORT;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -43,6 +44,10 @@ public final class SctpServer {
     private final ChannelConfigurer config;
     private ChannelFuture future;
     private static final Logger logger = Logger.getLogger(SctpServer.class.getName());
+
+    @Named(SETTINGS_KEY_SCTP_HOST)
+    @Inject(optional = true)
+    private String host;
 
     @Inject
     SctpServer(@Named(SETTINGS_KEY_SCTP_PORT) int port, Provider<ChannelHandlerAdapter> handler, ChannelConfigurer config, ShutdownHookRegistry reg) {
@@ -86,7 +91,13 @@ public final class SctpServer {
 
         logger.log(Level.FINE, "Start server on {0}", port);
         // Start the server.
-        ChannelFuture f = b.bind(port);
+        ChannelFuture f;
+        System.out.println("BIND SERVER " + host + ":" + port);
+        if (host == null) {
+            f = b.bind(port);
+        } else {
+            f = b.bind(host, port);
+        }
         if (logger.isLoggable(Level.FINE)) {
             f.addListener(new ChannelFutureListener() {
 
@@ -98,6 +109,9 @@ public final class SctpServer {
             });
         }
         f.sync();
+        if (f.cause() != null) {
+            return f;
+        }
         logger.log(Level.FINER, "Thread proceeding", Thread.currentThread());
         // For tests and things that need to delay execution until a connection
         // has been opened

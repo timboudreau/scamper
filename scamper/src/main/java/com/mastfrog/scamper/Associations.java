@@ -21,6 +21,7 @@ package com.mastfrog.scamper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.mastfrog.util.Exceptions;
+import com.mastfrog.util.collections.CollectionUtils;
 import com.mastfrog.util.thread.AtomicRoundRobin;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -30,15 +31,27 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.DefaultChannelPromise;
+import io.netty.channel.sctp.SctpChannel;
 import io.netty.channel.sctp.nio.NioSctpChannel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.UnknownHostException;
 import java.nio.channels.ClosedChannelException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -99,10 +112,10 @@ final class Associations {
     public void register(Channel channel) {
         getForKey(NEXT_OUT_STREAM, channel);
     }
-    
+
     public boolean disconnectIfConnected(Address a) {
         Asso asso;
-        synchronized(this) {
+        synchronized (this) {
             asso = associations.get(a);
         }
         boolean disconnected = false;
@@ -178,30 +191,27 @@ final class Associations {
         }
 
         public synchronized ChannelFuture connect() {
-            ChannelFuture result;
             try {
+                if (future instanceof FailedFuture) { // allow retry
+                    future = null;
+                }
                 if (future != null /* && future.channel().isOpen()*/) {
                     logger.log(Level.FINER, "Reuse connection {0}:{1}", new Object[]{address.host, address.port});
                     return future;
                 }
+                ChannelFuture result;
                 logger.log(Level.FINER, "Open connection {0}:{1}", new Object[]{address.host, address.port});
                 Bootstrap bootstrap = new Bootstrap();
                 config.init(bootstrap, address);
-                bootstrap.remoteAddress(address.toSocketAddress());
-                //need sync here?
-//                result = bootstrap.connect(address.host, address.port);
-                result = bootstrap.connect();
-                for (Address a : address) {
-                    bootstrap.connect(a.toSocketAddress());
-                }
-                future = result;
+
+                result = future = Associations.bindAddresses(address, bootstrap);
                 result.addListener(this);
             } catch (Exception e) {
                 e.printStackTrace();
-                result = new FailedFuture(e);
                 handler.onError(null, e);
+                return future = new FailedFuture(e);
             }
-            return result;
+            return future;
         }
 
         public void close() {
@@ -228,23 +238,23 @@ final class Associations {
                 channel.attr(NEXT_IN_STREAM).set(inStreams);
                 channel.attr(NEXT_OUT_STREAM).set(outStreams);
             }
-            System.out.println("LOCAL ADDRS: " + channel.allLocalAddresses());
-            System.out.println("REMOTE ADDRS: " + channel.allRemoteAddresses());
-            System.out.println("ASSOC: " + channel.association());
+            System.err.println("LOCAL ADDRS: " + channel.allLocalAddresses());
+            System.err.println("REMOTE ADDRS: " + channel.allRemoteAddresses());
+            System.err.println("ASSOC: " + channel.association());
             channel.closeFuture().addListener(new ChannelFutureListener() {
 
                 @Override
                 public void operationComplete(ChannelFuture future) throws Exception {
-                    System.out.println("Connection to " + address + " closed");
+                    System.err.println("Connection to " + address + " closed");
 //                    if (address.iterator().hasNext()) {
-//                        System.out.println("Leaving association in place");
+//                        System.err.println("Leaving association in place");
 //                        return;
 //                    }
                     logger.log(Level.FINER, "Closed connection {0}:{1}", new Object[]{address.host, address.port});
                     synchronized (Associations.this) {
-                        if (Associations.this.associations.get(address) == Asso.this) {
-                            Associations.this.associations.remove(address);
-                        }
+//                        if (Associations.this.associations.get(address) == Asso.this) {
+//                            Associations.this.associations.remove(address);
+//                        }
                     }
                 }
             });
@@ -293,8 +303,9 @@ final class Associations {
             }
         }
     }
-    
+
     static class FailedFuture extends DefaultChannelPromise implements Future<Void> {
+
         public FailedFuture(Throwable t) {
             super(null);
             setFailure(t);
@@ -318,6 +329,194 @@ final class Associations {
                 addListeners(f);
             }
             return this;
+        }
+    }
+
+    static class SettableFuture extends DefaultChannelPromise implements ChannelFuture {
+
+        private Channel channel;
+
+        public SettableFuture() {
+            super(null);
+        }
+
+        void setChannel(Channel channel) {
+            this.channel = channel;
+            this.setSuccess();
+        }
+
+        @Override
+        public Channel channel() {
+            return channel;
+        }
+    }
+
+    static ChannelFuture bindAddresses(final Address address, final Bootstrap bootstrap) throws InterruptedException, UnknownHostException {
+        InetSocketAddress local = new InetSocketAddress("localhost", 0);
+        ChannelFuture bindFuture = bootstrap.bind(local).sync();
+        final NioSctpChannel channel = (NioSctpChannel) bindFuture.channel();
+
+        Set<String> seen = new HashSet<>();
+        for (final Address a : address) {
+            System.out.println("BIND " + a);
+            InetAddress addr = "localhost".equals(a.host) ? InetAddress.getByAddress(new byte[]{127, 0, 0, 1}) : InetAddress.getByName(a.host);
+            String canon = addr.toString();
+            System.err.println("CANON: " + canon);
+            if (!seen.contains(canon)) {
+                System.out.println("BIND ADDTL " + addr);
+                ChannelFuture cf = channel.bindAddress(addr).sync();
+//                ChannelFuture cf = channel.bind(new InetSocketAddress(addr, a.port));
+                cf.addListener(new ChannelFutureListener() {
+
+                    @Override
+                    public void operationComplete(ChannelFuture future) throws Exception {
+                        if (future.isSuccess()) {
+                            System.out.println("Bind succeeded for " + a);
+                        } else {
+                            System.err.println("FAILURE BINDING " + a + ": " + future.cause());
+                        }
+                    }
+
+                });
+            }
+            seen.add(canon);
+        }
+        bootstrap.remoteAddress(address.resolve());
+        ChannelFuture connectFuture = bindFuture;
+        System.err.println("CHANNEL IS " + connectFuture.channel());
+        return bootstrap.connect();
+    }
+
+    static ChannelFuture xbindAddresses(final Address address, final Bootstrap bootstrap) {
+        // c.f. https://groups.google.com/forum/#!searchin/netty/sctp/netty/k5MXiZ_Tx20/fH9zcfsp52AJ
+        final SettableFuture result = new SettableFuture();
+        int count = address.secondaries.length + 1;
+        final List<Address> toConnect = new ArrayList<>(count);
+
+        List<Address> secs = Arrays.asList(address.secondaries);
+        System.err.println("SECONDARY ADDRESSES " + secs);
+
+        final AtomicInteger secondaryIndex = new AtomicInteger(0);
+
+        final AtomicReference<SctpChannel> lastSuccessChannel = new AtomicReference<>();
+
+        System.err.println("BindAndConnect " + address);
+
+        class ConnectOne implements ChannelFutureListener {
+
+            private final Address addr;
+
+            final CollectionUtils.AtomicIterator<Address> iter;
+            final AtomicInteger connectAttempts;
+            final int totalAttempts;
+
+            public ConnectOne(Address addr, CollectionUtils.AtomicIterator<Address> iter, int totalAttempts, AtomicInteger connectAttempts) {
+                this.addr = addr;
+                this.iter = iter;
+                this.totalAttempts = totalAttempts;
+                this.connectAttempts = connectAttempts;
+            }
+
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+                System.err.println("Connect result " + addr + " success? " + future.isSuccess());
+                if (future.cause() != null) {
+                    future.cause().printStackTrace();
+                }
+                SctpChannel ch = (SctpChannel) future.channel();
+                if (future.isSuccess()) {
+                    lastSuccessChannel.set(ch);
+                }
+                Address next = iter.getIfHasNext();
+                if (next != null) {
+                    System.err.println("Next connect is to " + next);
+                    ch.connect(new InetSocketAddress(next.host, next.port)).addListener(new ConnectOne(next, iter, totalAttempts, connectAttempts));
+                }
+                if (connectAttempts.incrementAndGet() == totalAttempts) {
+                    SctpChannel forResult = lastSuccessChannel.get();
+                    System.err.println("Done with connecting, send success? " + (forResult != null));
+                    if (forResult == null) {
+                        result.setFailure(new IOException("No channel connected"));
+                    } else {
+                        result.setChannel(forResult);
+                    }
+                }
+            }
+
+        }
+
+        class BindOne implements ChannelFutureListener {
+
+            final Address addr;
+
+            public BindOne(Address addr) {
+                this.addr = addr;
+            }
+
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+                System.err.println("Bind one " + addr + " success? " + future.isSuccess());
+                if (future.cause() != null) {
+                    future.cause().printStackTrace();
+                }
+                if (future.isSuccess()) {
+                    toConnect.add(addr);
+                    System.err.println("Add to success " + addr);
+                }
+                int ix = secondaryIndex.getAndIncrement();
+                Address next = null;
+                if (ix < address.secondaries.length) {
+                    next = address.secondaries[ix];
+                }
+                SctpChannel ch = (SctpChannel) future.channel();
+                if (next == null) {
+                    System.err.println("Bind next: " + next);
+                    ch.bindAddress(InetAddress.getByName(next.host));
+                } else {
+                    System.err.println("No next address");
+                }
+                System.err.println("Iteration " + ix + " secs length " + address.secondaries.length);
+                if (ix == address.secondaries.length - 1) {
+                    System.err.println("Bound all addresses there are, proceed to connect");
+                    CollectionUtils.AtomicIterator<Address> connects = CollectionUtils.synchronizedIterator(toConnect.iterator());
+                    Address firstConnect = connects.getIfHasNext();
+                    if (firstConnect == null) {
+                        result.setFailure(future.cause());
+                    } else {
+                        System.err.println("Connect " + firstConnect);
+                        ch.connect(new InetSocketAddress(firstConnect.host, firstConnect.port)).addListener(new ConnectOne(firstConnect, connects, toConnect.size(), new AtomicInteger()));
+                    }
+                }
+            }
+        }
+        bootstrap.connect(new InetSocketAddress(address.host, address.port)).addListener(new BindOne(address));
+        return result;
+    }
+
+    static class BS extends Bootstrap {
+
+        @Override
+        public ChannelFuture bind(SocketAddress localAddress) {
+            new Exception("Bind " + localAddress).printStackTrace();
+            return super.bind(localAddress); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public ChannelFuture bind(InetAddress inetHost, int inetPort) {
+            new Exception("Bind " + inetHost + ":" + inetPort).printStackTrace();
+            return super.bind(inetHost, inetPort); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public ChannelFuture bind(String inetHost, int inetPort) {
+            new Exception("Bind " + inetHost + ":" + inetPort).printStackTrace();
+            return super.bind(inetHost, inetPort); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public ChannelFuture bind(int inetPort) {
+            new Exception("Bind " + inetPort).printStackTrace();
+            return super.bind(inetPort); //To change body of generated methods, choose Tools | Templates.
         }
     }
 }

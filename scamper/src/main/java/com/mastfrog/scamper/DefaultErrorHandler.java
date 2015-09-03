@@ -23,18 +23,21 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Default implementation of error handler, which simply logs the error
- * and close the context.
+ * Default implementation of error handler, which simply logs the error and
+ * close the context.
  *
  * @author Tim Boudreau
  */
 class DefaultErrorHandler implements ErrorHandler {
+
     private static final Logger logger = Logger.getLogger(DefaultErrorHandler.class.getName());
 
     @Override
     public void onError(ChannelHandlerContext ctx, Throwable cause) {
         // Close the connection when an exception is raised.
         logger.log(Level.SEVERE, "Error", cause);
-        ctx.close();
+        if (ctx != null) {
+            ctx.close();
+        }
     }
 }

@@ -21,10 +21,13 @@ package com.mastfrog.scamper;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.sctp.SctpChannel;
+import java.util.Iterator;
 
 /**
  * Just initializes the channel, getting the adapter from the provider so that,
@@ -55,19 +58,40 @@ final class Init extends ChannelInitializer<SctpChannel> {
         pipeline.addLast(processor.get());
         pipeline.addLast(proc.get());
     }
-    
-    ChannelInitializer<SctpChannel> withAddress(final Address addr) {
-        return new ChannelInitializer<SctpChannel>() {
 
-            @Override
-            protected void initChannel(SctpChannel ch) throws Exception {
-                ch.bindAddress(addr.toSocketAddress().getAddress());
-                for (Address secondary : addr) {
-                    System.out.println("Bind secondary " + secondary);
-                    ch.bindAddress(secondary.toSocketAddress().getAddress());
-                }
-                Init.this.initChannel(ch);
-            }
-        };
+    ChannelInitializer<SctpChannel> withAddress(final Address address) {
+        return this;
+//        return new ChannelInitializer<SctpChannel>() {
+//
+//            @Override
+//            protected void initChannel(SctpChannel ch) throws Exception {
+//                class L implements ChannelFutureListener {
+//
+//                    final Iterator<Address> all = address.iterator();
+//                    int ct=0;
+//                    @Override
+//                    public void operationComplete(ChannelFuture future) throws Exception {
+//                        System.out.println("Initial bind " +  ct++ + " " + future.isSuccess() + " next? " + all.hasNext());
+//                        if (/*future.isSuccess() && */ all.hasNext()) {
+//                            Address a = all.next();
+//                            System.out.println("Bind address " + a);
+//                            SctpChannel ch = (SctpChannel) future.channel();
+//                            future = ch.bind(a.toSocketAddress());
+//                            if (all.hasNext()) {
+//                                future.addListener(this);
+//                            }
+//                        } else if (future.isSuccess() && !all.hasNext()) {
+//                            System.out.println("Bound all addresses");
+//                        }
+//                    }
+//                }
+//                ChannelFuture result = ch.bindAddress(address.toSocketAddress().getAddress());
+//                if (address.iterator().hasNext()) {
+//                    L l = new L();
+//                    result.addListener(l);
+//                }
+//                Init.this.initChannel(ch);
+//            }
+//        };
     }
 }
