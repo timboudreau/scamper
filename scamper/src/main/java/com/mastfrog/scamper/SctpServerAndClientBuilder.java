@@ -41,8 +41,10 @@ import com.mastfrog.util.ConfigurationError;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelFactory;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.sctp.SctpChannel;
 import io.netty.channel.sctp.SctpChannelOption;
 import io.netty.channel.sctp.nio.NioSctpChannel;
 import io.netty.channel.sctp.nio.NioSctpServerChannel;
@@ -86,7 +88,7 @@ public class SctpServerAndClientBuilder {
     public SctpServerAndClientBuilder() {
         this("scamper");
     }
-    
+
     public SctpServerAndClientBuilder withJacksonModule(com.fasterxml.jackson.databind.Module... modules) {
         jacksonModules.addAll(Arrays.asList(modules));
         return this;
@@ -232,7 +234,7 @@ public class SctpServerAndClientBuilder {
     }
 
     public Module buildModule() {
-        return new CombinedModule(modules, protoModule(), 
+        return new CombinedModule(modules, protoModule(),
                 new Mod(options, serverOptions, clientOptions, errors, useLoggingHandler));
     }
 
@@ -378,7 +380,15 @@ public class SctpServerAndClientBuilder {
             @Override
             public Bootstrap init(Bootstrap b, Address address) {
                 // Set default options - the builder can override them
-                b = b.group(group).channel(NioSctpChannel.class)
+                b = b.group(group)
+                        //                        .channel(NioSctpChannel.class)
+                        .channelFactory(new ChannelFactory<SctpChannel>() {
+                            @Override
+                            public SctpChannel newChannel() {
+//                                return new NioSctpMultiChannel();
+                                  return new NioSctpChannel();
+                            }
+                        })
                         .option(SctpChannelOption.SCTP_NODELAY, true)
                         .option(ChannelOption.ALLOCATOR, alloc);
                 if (useLoggingHandler) {
@@ -589,11 +599,12 @@ public class SctpServerAndClientBuilder {
     }
 
     private static class CombinedModule extends AbstractModule {
+
         private final List<Module> modules;
         private final Module proto;
         private final Mod mod;
 
-        public CombinedModule(List<Module>modules, Module proto, Mod mod) {
+        public CombinedModule(List<Module> modules, Module proto, Mod mod) {
             this.modules = modules;
             this.proto = proto;
             this.mod = mod;

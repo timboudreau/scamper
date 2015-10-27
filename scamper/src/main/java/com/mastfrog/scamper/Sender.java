@@ -25,6 +25,7 @@ import com.google.inject.name.Named;
 import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_CODEC;
 import com.mastfrog.util.Checks;
 import com.mastfrog.util.Codec;
+import com.sun.nio.sctp.Association;
 import com.sun.nio.sctp.MessageInfo;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -32,8 +33,8 @@ import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.sctp.SctpChannel;
 import io.netty.channel.sctp.SctpMessage;
-import io.netty.channel.sctp.nio.NioSctpChannel;
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.util.logging.Level;
@@ -101,18 +102,21 @@ public final class Sender {
             }
         }
         ByteBuf encodedBuffer = encoder.encode(message.type, outbound, channel);
-        NioSctpChannel ch = (NioSctpChannel) channel;
+        SctpChannel ch = (SctpChannel) channel;
+        System.out.println("SEND TO REMOTES: " + ch.allRemoteAddresses());
+        System.out.println("LOCALS: " + ch.allLocalAddresses());
         if (!ch.isOpen()) {
             return ch.newFailedFuture(new ClosedChannelException());
         }
-        if (ch.association() == null) {
+        Association asoc = ch.association();
+        if (asoc == null) {
             return channel.newFailedFuture(new IOException("Association closed - client has disconnected"));
         }
-        MessageInfo info = MessageInfo.createOutgoing(ch.association(), ch.remoteAddress(), sctpChannel);
+        MessageInfo info = MessageInfo.createOutgoing(asoc, ch.remoteAddress(), sctpChannel);
         info.unordered(true);
 
         SctpMessage sctpMessage = new SctpMessage(info, encodedBuffer);
-        logger.log(Level.FINE, "Send message to {0} type {1}", new Object[]{channel.remoteAddress(),
+        logger.log(Level.FINE, "Send message to {0} type {1}", new Object[]{ch.allRemoteAddresses(),
             message.type});
         ChannelFuture result = channel.writeAndFlush(sctpMessage);
         if (logger.isLoggable(Level.FINER)) {
@@ -191,6 +195,7 @@ public final class Sender {
                     }
                     return;
                 }
+                System.out.println("SEND TO REMOTE ADDRS: " + ((SctpChannel)future.channel()).allRemoteAddresses());
                 ChannelFuture fut = send(future.channel(), message, sctpChannel);
                 if (l != null) {
                     fut.addListener(l);

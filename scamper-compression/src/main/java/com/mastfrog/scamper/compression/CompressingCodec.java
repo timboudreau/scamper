@@ -94,15 +94,6 @@ final class CompressingCodec extends MessageCodec {
         }
     }
 
-    static String bb2s(ByteBuf buf) throws IOException {
-        int old = buf.readerIndex();
-        try (ByteBufInputStream in = new ByteBufInputStream(buf)) {
-            return Streams.readString(in);
-        } finally {
-            buf.readerIndex(old);
-        }
-    }
-
     @Override
     public int magicNumber() {
         return MAGIC;

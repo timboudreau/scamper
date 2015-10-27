@@ -39,6 +39,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.NotYetBoundException;
 import java.nio.channels.SelectionKey;
 import java.util.Collections;
 import java.util.HashSet;
@@ -131,8 +132,10 @@ public class NioSctpMultiChannel extends AbstractNioMessageChannel implements io
     @Override
     public Association association() {
         try {
-            return javaChannel().association();
+            return javaChannel().associations().isEmpty() ? null : javaChannel().associations().iterator().next();
         } catch (IOException ignored) {
+            return null;
+        } catch (NotYetBoundException ignored) {
             return null;
         }
     }
@@ -159,7 +162,12 @@ public class NioSctpMultiChannel extends AbstractNioMessageChannel implements io
     @Override
     public Set<InetSocketAddress> allRemoteAddresses() {
         try {
-            final Set<SocketAddress> allLocalAddresses = javaChannel().getRemoteAddresses();
+            Set<SocketAddress> all = new HashSet<SocketAddress>();
+            for (Association a : javaChannel().associations()) {
+                all.addAll(javaChannel().getRemoteAddresses(a));
+            }
+//            final Set<SocketAddress> allLocalAddresses = javaChannel().getAllLocalAddresses();
+            final Set<SocketAddress> allLocalAddresses = all;
             final Set<InetSocketAddress> addresses = new HashSet<InetSocketAddress>(allLocalAddresses.size());
             for (SocketAddress socketAddress : allLocalAddresses) {
                 addresses.add((InetSocketAddress) socketAddress);
@@ -220,26 +228,27 @@ public class NioSctpMultiChannel extends AbstractNioMessageChannel implements io
             javaChannel().bind(localAddress);
         }
 
-        boolean success = false;
-        try {
-            boolean connected = javaChannel().connect(remoteAddress);
-            if (!connected) {
-                selectionKey().interestOps(SelectionKey.OP_CONNECT);
-            }
-            success = true;
-            return connected;
-        } finally {
-            if (!success) {
-                doClose();
-            }
-        }
+//        boolean success = false;
+//        try {
+//            boolean connected = javaChannel().connect(remoteAddress);
+//            if (!connected) {
+//                selectionKey().interestOps(SelectionKey.OP_CONNECT);
+//            }
+//            success = true;
+//            return connected;
+//        } finally {
+//            if (!success) {
+//                doClose();
+//            }
+//        }
+        return true;
     }
 
     @Override
     protected void doFinishConnect() throws Exception {
-        if (!javaChannel().finishConnect()) {
-            throw new Error();
-        }
+//        if (!javaChannel().finishConnect()) {
+//            throw new Error();
+//        }
     }
 
     @Override
@@ -254,7 +263,7 @@ public class NioSctpMultiChannel extends AbstractNioMessageChannel implements io
 
     @Override
     protected int doReadMessages(List<Object> buf) throws Exception {
-        SctpChannel ch = javaChannel();
+        SctpMultiChannel ch = javaChannel();
 
         RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
         ByteBuf buffer = allocHandle.allocate(config().getAllocator());
@@ -340,6 +349,10 @@ public class NioSctpMultiChannel extends AbstractNioMessageChannel implements io
 
     @Override
     public ChannelFuture bindAddress(final InetAddress localAddress, final ChannelPromise promise) {
+        if (true) {
+            promise.setSuccess();
+            return promise;
+        }
         if (eventLoop().inEventLoop()) {
             try {
                 javaChannel().bindAddress(localAddress);
@@ -441,17 +454,20 @@ public class NioSctpMultiChannel extends AbstractNioMessageChannel implements io
         @Override
         public <T> boolean setOption(ChannelOption<T> option, T value) {
             validate(option, value);
-
-            if (option == SO_RCVBUF) {
-                setReceiveBufferSize((Integer) value);
-            } else if (option == SO_SNDBUF) {
-                setSendBufferSize((Integer) value);
-            } else if (option == SCTP_NODELAY) {
-                setSctpNoDelay((Boolean) value);
-            } else if (option == SCTP_INIT_MAXSTREAMS) {
-                setInitMaxStreams((SctpStandardSocketOptions.InitMaxStreams) value);
-            } else {
-                return super.setOption(option, value);
+            try {
+                if (option == SO_RCVBUF) {
+                    setReceiveBufferSize((Integer) value);
+                } else if (option == SO_SNDBUF) {
+                    setSendBufferSize((Integer) value);
+                } else if (option == SCTP_NODELAY) {
+                    setSctpNoDelay((Boolean) value);
+                } else if (option == SCTP_INIT_MAXSTREAMS) {
+                    setInitMaxStreams((SctpStandardSocketOptions.InitMaxStreams) value);
+                } else {
+                    return super.setOption(option, value);
+                }
+            } catch (NotYetBoundException ex) {
+                //do nothing
             }
 
             return true;
@@ -537,6 +553,8 @@ public class NioSctpMultiChannel extends AbstractNioMessageChannel implements io
                 }
             } catch (IOException e) {
                 throw new ChannelException(e);
+            } catch (NotYetBoundException ex) {
+                
             }
             return null;
         }

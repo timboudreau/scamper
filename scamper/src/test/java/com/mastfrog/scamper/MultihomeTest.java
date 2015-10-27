@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Maps;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.mastfrog.giulius.ShutdownHookRegistry;
@@ -51,6 +52,7 @@ public class MultihomeTest {
 
     @Test
     public void test() throws InterruptedException {
+        Thread.sleep(1000);
 //if (true) return;
         assertEquals(BASE, combined.port);
         Iterator<Address> subs = combined.iterator();
@@ -82,10 +84,12 @@ public class MultihomeTest {
         sendAndWait(two);
         all = all();
         assertTrue(all + "", all.contains(two));
+        assertFalse("First association is still alive", thingsForString.get("Thing-0").contains(two));
 
         // Shut down the primary association's server
-        int toStop = 0;
+        int toStop = 1;
         servers[toStop].stop();
+        System.out.println("SHUT DOWN " + controls.get(toStop) + " for " + toStop);
         controls.get(toStop).shutdown();
         Thread.sleep(350);
 
@@ -94,10 +98,12 @@ public class MultihomeTest {
         all = all();
         assertTrue(all + " - with primary association down, nothing received", all.contains(three));
         assertFalse("First association is still alive", thingsForString.get("Thing-0").contains(three));
+        assertTrue("First association is still alive", thingsForString.get("Thing-1").contains(three));
 
         // Shut down the secondary association's server
-        servers[1].stop();
-        controls.get(1).shutdown();
+//        servers[1].stop();
+//        controls.get(1).shutdown();
+//        System.out.println("SHUT DOWN " + controls.get(1));
 
 //        Thing four = new Thing(4);
 //        sendAndWait(four);
@@ -163,8 +169,12 @@ public class MultihomeTest {
             final int index = i;
             final String name = "Thing-" + i;
             thingsForString.put(name, Collections.synchronizedList(new LinkedList<>()));
-            String host = a.getHostName();
-            subs.add(new Address(a.getHostName(), BASE));
+            String hst = a.getHostName();
+            if ("localhost".equals(hst)) {
+                hst = "127.0.0.1";
+            }
+            subs.add(new Address(hst, BASE));
+            final String host = hst;
             Control<SctpServer> serverControl = new SctpServerAndClientBuilder("test" + i)
                     .onPort(BASE)
                     .withHost(host)
@@ -173,8 +183,9 @@ public class MultihomeTest {
 
                         @Override
                         protected void configure() {
-                            System.out.println("CONFIGURE " + name);
+                            System.out.println("CREATE Thing-" + index + " on " + host);
                             bind(String.class).annotatedWith(Names.named("which")).toInstance("Thing-" + index);
+                            bind(String.class).annotatedWith(Names.named("addr")).toInstance(host + ":" + BASE);
                             bind(ErrorHandler.class).to(EH.class);
                         }
                     }).buildServer();
@@ -197,6 +208,7 @@ public class MultihomeTest {
                     @Override
                     protected void configure() {
                         bind(String.class).annotatedWith(Names.named("which")).toInstance("Client");
+                        bind(String.class).annotatedWith(Names.named("addr")).toInstance("x");
                         bind(ErrorHandler.class).to(EH.class);
                     }
                 })
@@ -217,20 +229,23 @@ public class MultihomeTest {
         return result;
     }
 
+    @Singleton
     static class H extends MessageHandler<Void, Thing> implements Runnable {
 
         public final String name;
+        private final String addr;
 
         @Inject
-        H(@Named("which") String name, ShutdownHookRegistry reg) {
+        H(@Named("which") String name, ShutdownHookRegistry reg, @Named("addr") String addr) {
             super(Thing.class);
             this.name = name;
+            this.addr = addr;
             reg.add(this);
         }
 
         @Override
         public Message<Void> onMessage(Message<Thing> data, ChannelHandlerContext ctx) {
-            System.out.println(name + " receives " + data.body);
+            System.out.println(name + " " + addr + " receives " + data.body);
             List<Thing> l = thingsForString.get(name);
             if (l == null) {
                 l = new ArrayList<>();
@@ -245,10 +260,9 @@ public class MultihomeTest {
 
         @Override
         public void run() {
-            System.out.println("SHUTDOWN " + name);
-            Thread.dumpStack();
+            System.out.println("SHUTDOWN " + name + " on " + addr);
+//            Thread.dumpStack();
         }
-
     }
 
     static int ix;
@@ -283,15 +297,17 @@ public class MultihomeTest {
 
     static class EH implements ErrorHandler {
         private final String which;
+        private final String addr;
         
         @Inject
-        EH(@Named("which") String which) {
+        EH(@Named("which") String which, @Named("addr") String addr) {
             this.which = which;
+            this.addr = addr;
         }
 
         @Override
         public void onError(ChannelHandlerContext ctx, Throwable t) {
-            System.out.println("ERROR - " + which  + " " + t.getMessage());
+            System.out.println("ERROR - " + which  + " " + addr + " " + t.getMessage());
             t.printStackTrace();
             err = t;
         }

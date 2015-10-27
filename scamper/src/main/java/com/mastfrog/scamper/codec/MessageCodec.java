@@ -27,6 +27,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.sctp.SctpMessage;
 import java.net.SocketAddress;
+import java.nio.channels.AlreadyConnectedException;
 
 /**
  * Codec which is responsible for transforming a message type and message into
@@ -69,24 +70,25 @@ public abstract class MessageCodec {
      * The first byte of a message, which identifies it as belonging to this
      * codec (there could be more than one).
      *
-     * @return 
+     * @return
      */
     protected abstract int magicNumber();
 
     /**
      * Determine if this codec recognizes this ByteBuf.
      * <p>
-     * This method will move the reader index of the passed ByteBuf <i>forward one byte</i>
-     * if it returns true.  If it returns false, the ByteBuf's state will be 
+     * This method will move the reader index of the passed ByteBuf <i>forward
+     * one byte</i>
+     * if it returns true. If it returns false, the ByteBuf's state will be
      * unaltered.
      * <p>
      * The default implementation checks if the first byte equals the return
-     * value of <code>magicNumber()</code>.  Implementations that delegate
+     * value of <code>magicNumber()</code>. Implementations that delegate
      * between multiple codecs should call this method for each until one
      * accepts it.
-     * 
+     *
      * @param data
-     * @return 
+     * @return
      */
     public boolean accept(ByteBuf data) {
         int old = data.readerIndex();
@@ -147,6 +149,15 @@ public abstract class MessageCodec {
      * @throws Exception if something goes wrong
      */
     public void onConnect(ChannelHandlerContext ctx, SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) throws Exception {
-        ctx.connect(remoteAddress, localAddress, promise);
+        try {
+            System.out.println("OnConnect " + promise);
+            if (!ctx.channel().isActive()) {
+                ctx.connect(remoteAddress, localAddress, promise);
+            } else {
+                promise.setSuccess();
+            }
+        } catch (AlreadyConnectedException ex) {
+            // ignore
+        }
     }
 }
