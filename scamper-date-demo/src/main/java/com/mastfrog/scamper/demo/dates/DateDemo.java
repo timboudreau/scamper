@@ -53,22 +53,17 @@ public class DateDemo {
         }
     }
 
-    static class DateResponseHandler extends MessageHandler<Map, DateRecord> {
-
-        DateResponseHandler() {
-            super(DateRecord.class);
-        }
-
-        int ix;
-
-        @Override
-        public Message<Map> onMessage(Message<DateRecord> data, ChannelHandlerContext ctx) {
-            System.out.println("RECEIVE " + new Date(data.body.when) + " from " + ctx.channel().remoteAddress() + " at " + new Date());
-            return null;
-        }
+static class DateResponseHandler extends MessageHandler<Map, DateRecord> {
+    DateResponseHandler() {
+        super(DateRecord.class);
     }
-
-    public static class DateRecord implements Serializable {
-        public long when = System.currentTimeMillis();
+    @Override
+    public Message<Map> onMessage(Message<DateRecord> data, ChannelHandlerContext ctx) {
+        System.out.println("RECEIVE " + new Date(data.body.when) + " from " + ctx.channel().remoteAddress() + " at " + new Date());
+        return null;
     }
+}
+public static class DateRecord implements Serializable {
+    public long when = System.currentTimeMillis();
+}
 }

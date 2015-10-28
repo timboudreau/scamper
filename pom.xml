@@ -18,7 +18,7 @@
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
         <netty.version>5.0.0.Alpha3-SNAPSHOT</netty.version>
-        <mastfrog.version>1.6.1.2-dev</mastfrog.version>
+        <mastfrog.version>1.6.3</mastfrog.version>
     </properties>
     <build>
         <plugins>

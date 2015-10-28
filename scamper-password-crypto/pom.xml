@@ -6,6 +6,7 @@
         <artifactId>scamper-parent</artifactId>
         <version>1.3-dev</version>
     </parent>
+    <name>Scamper Password Crypto</name>
     <artifactId>scamper-password-crypto</artifactId>
     <packaging>jar</packaging>
     <dependencies>
