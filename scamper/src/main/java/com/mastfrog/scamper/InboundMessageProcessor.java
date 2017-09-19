@@ -5,7 +5,6 @@ import com.google.inject.Singleton;
 import com.mastfrog.giulius.Dependencies;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.IOException;
 
 /**
@@ -17,7 +16,7 @@ import java.io.IOException;
  */
 @Singleton
 @ChannelHandler.Sharable
-public class InboundMessageProcessor extends SimpleChannelInboundHandler<Message> {
+public class InboundMessageProcessor extends Netty5Handler<Message> {
 
     private final MessageHandlerMapping mapping;
     private final Dependencies deps;

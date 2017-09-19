@@ -28,7 +28,7 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.mastfrog.giulius.Dependencies;
 import com.mastfrog.giulius.DependenciesBuilder;
-import com.mastfrog.guicy.annotations.Namespace;
+import com.mastfrog.giulius.annotations.Namespace;
 import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_BOSS_THREADS;
 import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_CODEC;
 import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_WORKER_THREADS;

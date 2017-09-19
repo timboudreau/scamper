@@ -31,7 +31,6 @@ import com.mastfrog.util.Codec;
 import de.undercouch.bson4jackson.BsonFactory;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.io.IOException;
@@ -53,13 +52,13 @@ import java.util.List;
  */
 final class NettyBootstrapModule extends AbstractModule {
 
-    private final Class<? extends ChannelHandlerAdapter> adap;
+    private final Class<? extends Netty5Handler> adap;
     private final int bossThreads;
     private final int workerThreads;
     private final DataEncoding encoding;
     private final List<com.fasterxml.jackson.databind.Module> jacksonModules;
 
-    public NettyBootstrapModule(Class<? extends ChannelHandlerAdapter> adap, int bossThreads, int workerThreads, DataEncoding encoding, List<com.fasterxml.jackson.databind.Module> jacksonModules) {
+    public NettyBootstrapModule(Class<? extends Netty5Handler> adap, int bossThreads, int workerThreads, DataEncoding encoding, List<com.fasterxml.jackson.databind.Module> jacksonModules) {
         this.adap = adap;
         this.bossThreads = bossThreads;
         this.workerThreads = workerThreads;
@@ -95,8 +94,8 @@ final class NettyBootstrapModule extends AbstractModule {
             default :
                 throw new AssertionError(encoding);
         }
-        bind(ChannelHandlerAdapter.class).annotatedWith(Names.named("dispatcher")).to(adap);
-        bind(ChannelHandlerAdapter.class).annotatedWith(Names.named("processor")).to(InboundMessageDecoder.class);
+        bind(Netty5Handler.class).annotatedWith(Names.named("dispatcher")).to(adap);
+        bind(Netty5Handler.class).annotatedWith(Names.named("processor")).to(InboundMessageDecoder.class);
         bind(EventLoopGroup.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_BOSS_THREADS)).toInstance(new NioEventLoopGroup(bossThreads));
         bind(EventLoopGroup.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_WORKER_THREADS)).toInstance(workerThreads == -1 ? new NioEventLoopGroup() : new NioEventLoopGroup(workerThreads));
         bind(ByteBufAllocator.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_CODEC)).toInstance(new PooledByteBufAllocator(true));

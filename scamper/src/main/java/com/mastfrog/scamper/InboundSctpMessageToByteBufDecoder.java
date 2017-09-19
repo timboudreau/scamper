@@ -15,7 +15,6 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.sctp.SctpMessage;
 import io.netty.channel.sctp.nio.NioSctpChannel;
 import io.netty.util.Attribute;
@@ -34,7 +33,7 @@ import java.util.Map;
  */
 @Singleton
 @ChannelHandler.Sharable
-final class InboundSctpMessageToByteBufDecoder extends SimpleChannelInboundHandler<SctpMessage> {
+final class InboundSctpMessageToByteBufDecoder extends Netty5Handler<SctpMessage> {
 
     public static final AttributeKey<Integer> SCTP_CHANNEL_KEY = AttributeKey.valueOf(InboundSctpMessageToByteBufDecoder.class, "sctpChannel");
     private final Associations assoc;

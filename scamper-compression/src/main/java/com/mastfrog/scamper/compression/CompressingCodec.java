@@ -28,6 +28,7 @@ import com.mastfrog.settings.Settings;
 import com.mastfrog.util.Exceptions;
 import com.mastfrog.util.Streams;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.Channel;
@@ -108,12 +109,16 @@ final class CompressingCodec extends MessageCodec {
         return MAGIC;
     }
 
+    private ByteBufAllocator alloc(ChannelHandlerContext ctx) {
+        return ctx == null ? /* unit test */ ByteBufAllocator.DEFAULT : ctx.alloc();
+    }
+
     private MessageTypeAndBuffer decodeImpl(ByteBuf buf, ChannelHandlerContext ctx, int sctpChannel) throws Exception {
         MessageType messageType = reg.forByteBuf(buf);
         if (messageType.isUnknown()) {
             return new MessageTypeAndBuffer(messageType, buf.slice(), sctpChannel);
         }
-        ByteBuf bb = ctx.alloc().buffer();
+        ByteBuf bb = alloc(ctx).buffer();
         uncompress(buf.slice(), bb);
         return new MessageTypeAndBuffer(messageType, bb, sctpChannel);
     }

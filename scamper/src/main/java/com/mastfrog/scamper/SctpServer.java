@@ -19,14 +19,12 @@
 package com.mastfrog.scamper;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.name.Named;
 import com.mastfrog.giulius.ShutdownHookRegistry;
 import static com.mastfrog.scamper.ProtocolModule.SETTINGS_KEY_SCTP_PORT;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import java.util.concurrent.atomic.AtomicReference;
@@ -45,7 +43,7 @@ public final class SctpServer {
     private static final Logger logger = Logger.getLogger(SctpServer.class.getName());
 
     @Inject
-    SctpServer(@Named(SETTINGS_KEY_SCTP_PORT) int port, Provider<ChannelHandlerAdapter> handler, ChannelConfigurer config, ShutdownHookRegistry reg) {
+    SctpServer(@Named(SETTINGS_KEY_SCTP_PORT) int port, ChannelConfigurer config, ShutdownHookRegistry reg) {
         this.port = port;
         this.config = config;
         reg.add(new Runnable() {

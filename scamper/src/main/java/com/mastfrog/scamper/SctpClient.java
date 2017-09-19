@@ -25,7 +25,6 @@ import static com.mastfrog.scamper.ProtocolModule.SETTINGS_KEY_SCTP_PORT;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import java.util.logging.Level;
@@ -42,7 +41,7 @@ public final class SctpClient {
     private static final Logger logger = Logger.getLogger(SctpClient.class.getName());
 
     @Inject
-    SctpClient(@Named("host") String host, @Named(SETTINGS_KEY_SCTP_PORT) int port, Provider<ChannelHandlerAdapter> handler, ChannelConfigurer configurer) {
+    SctpClient(@Named("host") String host, @Named(SETTINGS_KEY_SCTP_PORT) int port, Provider<Netty5Handler> handler, ChannelConfigurer configurer) {
         this.host = host;
         this.port = port;
         this.configurer = configurer;

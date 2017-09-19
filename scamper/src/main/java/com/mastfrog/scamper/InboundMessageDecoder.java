@@ -12,7 +12,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.IOException;
 
 /**
@@ -22,7 +21,7 @@ import java.io.IOException;
  */
 @Singleton
 @ChannelHandler.Sharable
-final class InboundMessageDecoder extends SimpleChannelInboundHandler<MessageTypeAndBuffer> {
+final class InboundMessageDecoder extends Netty5Handler<MessageTypeAndBuffer> {
 
     private final MessageHandlerMapping mapping;
     private final Dependencies deps;

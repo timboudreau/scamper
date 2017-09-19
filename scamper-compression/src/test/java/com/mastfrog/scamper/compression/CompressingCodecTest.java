@@ -34,7 +34,7 @@ public class CompressingCodecTest {
     }
 
     private io.netty.channel.ChannelHandlerContext fakeChannelContext() {
-        return fakeChannel().pipeline().firstContext();
+        return fakeChannel().pipeline().context("x");
     }
 
     private ByteBuf bufFor(String data) throws UnsupportedEncodingException {

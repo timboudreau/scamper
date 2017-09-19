@@ -31,9 +31,11 @@ import com.mastfrog.scamper.codec.MessageCodec;
 import com.mastfrog.scamper.password.crypto.EncryptingCodecTest.M;
 import com.mastfrog.util.Streams;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.embedded.EmbeddedChannel;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
@@ -51,6 +53,15 @@ public class EncryptingCodecTest {
 
     private io.netty.channel.Channel fakeChannel() {
         return new io.netty.channel.embedded.EmbeddedChannel();
+    }
+
+    static final class FakeChannel extends EmbeddedChannel {
+
+        @Override
+        public ByteBufAllocator alloc() {
+            return ByteBufAllocator.DEFAULT;
+        }
+
     }
 
     private io.netty.channel.ChannelHandlerContext fakeChannelContext() {

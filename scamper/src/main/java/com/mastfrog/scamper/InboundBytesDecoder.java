@@ -25,7 +25,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.SimpleChannelInboundHandler;
 import java.net.SocketAddress;
 
 /**
@@ -35,7 +34,7 @@ import java.net.SocketAddress;
  */
 @Singleton
 @Sharable
-final class InboundBytesDecoder extends SimpleChannelInboundHandler<ByteBuf> {
+final class InboundBytesDecoder extends Netty5Handler<ByteBuf> {
 
     private final ErrorHandler errors;
     private final MessageCodec codec;

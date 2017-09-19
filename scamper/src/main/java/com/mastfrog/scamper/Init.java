@@ -21,7 +21,6 @@ package com.mastfrog.scamper;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.sctp.SctpChannel;
@@ -34,13 +33,13 @@ import io.netty.channel.sctp.SctpChannel;
  */
 final class Init extends ChannelInitializer<SctpChannel> {
 
-    private final Provider<ChannelHandlerAdapter> handler;
-    private final Provider<ChannelHandlerAdapter> processor;
+    private final Provider<Netty5Handler> handler;
+    private final Provider<Netty5Handler> processor;
     private final Provider<InboundSctpMessageToByteBufDecoder> sctpMessageToBytes;
     private final Provider<InboundMessageProcessor> proc;
 
     @Inject
-    public Init(@Named("dispatcher") Provider<ChannelHandlerAdapter> handler, @Named("processor") Provider<ChannelHandlerAdapter> processor, Provider<InboundSctpMessageToByteBufDecoder> inbound, Provider<InboundMessageProcessor> proc) {
+    public Init(@Named("dispatcher") Provider<Netty5Handler> handler, @Named("processor") Provider<Netty5Handler> processor, Provider<InboundSctpMessageToByteBufDecoder> inbound, Provider<InboundMessageProcessor> proc) {
         this.handler = handler;
         this.processor = processor;
         sctpMessageToBytes = inbound;
