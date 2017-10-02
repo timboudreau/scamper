@@ -16,18 +16,20 @@ import java.io.IOException;
  */
 @Singleton
 @ChannelHandler.Sharable
-public class InboundMessageProcessor extends Netty5Handler<Message> {
+class InboundMessageProcessor extends Netty5Handler<Message> {
 
     private final MessageHandlerMapping mapping;
     private final Dependencies deps;
     private final Sender sender;
+    private final MessageFilter filter;
 
     @Inject
-    InboundMessageProcessor(MessageHandlerMapping mapping, Dependencies deps, Sender sender) {
+    InboundMessageProcessor(MessageHandlerMapping mapping, Dependencies deps, Sender sender, MessageFilter filter) {
         super(Message.class);
         this.mapping = mapping;
         this.deps = deps;
         this.sender = sender;
+        this.filter = filter;
     }
 
     @Override
@@ -36,7 +38,7 @@ public class InboundMessageProcessor extends Netty5Handler<Message> {
     }
 
     private <T, M> Message<T> handleMessage(Message<M> message, MessageHandler<T, M> handler, ChannelHandlerContext ctx) throws IOException {
-        return handler.onMessage(message, ctx);
+        return filter.handleMessage(message, handler, ctx);
     }
 
     @Override

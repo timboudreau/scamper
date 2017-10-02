@@ -18,6 +18,7 @@
  */
 package com.mastfrog.scamper;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -91,8 +92,22 @@ public final class MessageType {
         return unknown;
     }
 
+    private String stringValue;
+    @JsonValue
     public String toString() {
-        return name + " (" + byteOne + "," + byteTwo + ")";
+        if (stringValue == null) {
+            stringValue = "0x" + hexString(byteOne) + hexString(byteTwo)
+                    + "(" + name + ")";
+        }
+        return stringValue;
+    }
+
+    private static String hexString(int val) {
+        String result = Integer.toHexString(val);
+        if (result.length() == 1) {
+            result = "0" + result;
+        }
+        return result;
     }
 
     /**

@@ -56,17 +56,25 @@ public class ProtocolModule extends AbstractModule {
         this.bossThreads = bossThreads;
         this.workerThreads = workerThreads;
         this.encoding = useBson;
-        secureRandom = new SecureRandom();
-        rand = new Random(secureRandom.nextLong());
+        try {
+            // Hangs if not system activity
+//            System.setProperty("java.security.egd", "file:/dev/urandom");
+//            secureRandom = SecureRandom.getInstanceStrong();
+            secureRandom = new SecureRandom();
+            rand = new Random(secureRandom.nextLong());
+        } catch (/*NoSuchAlgorithm*/Exception ex) {
+            throw new ConfigurationError(ex);
+        }
     }
 
     void addEntry(Entry entry) {
         bind(entry.message, entry.type);
     }
-    
+
     private final List<Entry> entries = new LinkedList<>();
-    
+
     private final List<com.fasterxml.jackson.databind.Module> jacksonModules = new LinkedList<>();
+
     public ProtocolModule withJacksonModule(com.fasterxml.jackson.databind.Module module) {
         jacksonModules.add(module);
         return this;

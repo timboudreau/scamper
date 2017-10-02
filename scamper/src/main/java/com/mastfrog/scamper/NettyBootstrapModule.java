@@ -33,11 +33,13 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.util.Base64;
 import java.util.List;
 
 /**
@@ -161,7 +163,7 @@ final class NettyBootstrapModule extends AbstractModule {
 
         @Override
         public <T> String writeValueAsString(T t) throws IOException {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            return Base64.getEncoder().encodeToString(writeValueAsBytes(t));
         }
 
         @Override
@@ -173,7 +175,9 @@ final class NettyBootstrapModule extends AbstractModule {
 
         @Override
         public <T> byte[] writeValueAsBytes(T t) throws IOException {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            writeValue(t, baos) ;
+            return baos.toByteArray();
         }
 
         @Override
