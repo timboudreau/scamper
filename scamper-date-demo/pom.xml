@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.mastfrog</groupId>
         <artifactId>scamper-parent</artifactId>
-        <version>2.0</version>
+        <version>2.1</version>
     </parent>
     <artifactId>scamper-date-demo</artifactId>
     <packaging>jar</packaging>
