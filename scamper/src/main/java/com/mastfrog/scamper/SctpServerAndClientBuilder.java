@@ -35,8 +35,8 @@ import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_WORKER_T
 import static com.mastfrog.scamper.ProtocolModule.SETTINGS_KEY_SCTP_PORT;
 import com.mastfrog.settings.Settings;
 import com.mastfrog.settings.SettingsBuilder;
-import com.mastfrog.util.Checks;
-import com.mastfrog.util.ConfigurationError;
+import com.mastfrog.util.preconditions.Checks;
+import com.mastfrog.util.preconditions.ConfigurationError;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;

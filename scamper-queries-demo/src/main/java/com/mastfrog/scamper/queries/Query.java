@@ -3,7 +3,7 @@ package com.mastfrog.scamper.queries;
 import com.mastfrog.scamper.Address;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.mastfrog.util.Checks;
+import com.mastfrog.util.preconditions.Checks;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;

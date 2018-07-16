@@ -20,8 +20,8 @@ package com.mastfrog.scamper;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Singleton;
-import com.mastfrog.util.Checks;
-import com.mastfrog.util.ConfigurationError;
+import com.mastfrog.util.preconditions.Checks;
+import com.mastfrog.util.preconditions.ConfigurationError;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import java.util.HashMap;

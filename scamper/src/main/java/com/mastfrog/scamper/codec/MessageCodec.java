@@ -25,7 +25,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.sctp.SctpMessage;
 import java.net.SocketAddress;
 
 /**

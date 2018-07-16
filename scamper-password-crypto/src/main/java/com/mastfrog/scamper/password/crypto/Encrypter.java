@@ -20,8 +20,8 @@ package com.mastfrog.scamper.password.crypto;
 
 import com.mastfrog.giulius.Dependencies;
 import com.mastfrog.settings.Settings;
-import com.mastfrog.util.ConfigurationError;
-import com.mastfrog.util.Exceptions;
+import com.mastfrog.util.preconditions.ConfigurationError;
+import com.mastfrog.util.preconditions.Exceptions;
 import io.netty.util.CharsetUtil;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;

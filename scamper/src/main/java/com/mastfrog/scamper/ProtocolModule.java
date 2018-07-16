@@ -19,7 +19,7 @@
 package com.mastfrog.scamper;
 
 import com.google.inject.AbstractModule;
-import com.mastfrog.util.ConfigurationError;
+import com.mastfrog.util.preconditions.ConfigurationError;
 import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.LinkedList;

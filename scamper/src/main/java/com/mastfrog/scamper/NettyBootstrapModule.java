@@ -27,19 +27,15 @@ import com.mastfrog.giulius.ShutdownHookRegistry;
 import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_BOSS_THREADS;
 import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_CODEC;
 import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_WORKER_THREADS;
-import com.mastfrog.util.Codec;
+import com.mastfrog.util.codec.Codec;
 import de.undercouch.bson4jackson.BsonFactory;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.util.Base64;
 import java.util.List;
 
 /**
@@ -91,7 +87,7 @@ final class NettyBootstrapModule extends AbstractModule {
                 bind(Codec.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_CODEC)).to(CodecImpl.class);
                 break;
             case JAVA_SERIALIZATION :
-                bind(Codec.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_CODEC)).to(SerializationCodec.class);
+                bind(Codec.class).annotatedWith(Names.named(GUICE_BINDING_SCAMPER_CODEC)).toInstance(Codec.javaSerialization());
                 break;
             default :
                 throw new AssertionError(encoding);
@@ -157,37 +153,5 @@ final class NettyBootstrapModule extends AbstractModule {
         public <T> T readValue(InputStream in, Class<T> type) throws IOException {
             return mapper.readValue(in, type);
         }
-    }
-
-    private static final class SerializationCodec implements Codec {
-
-        @Override
-        public <T> String writeValueAsString(T t) throws IOException {
-            return Base64.getEncoder().encodeToString(writeValueAsBytes(t));
-        }
-
-        @Override
-        public <T> void writeValue(T t, OutputStream out) throws IOException {
-            try (ObjectOutputStream oout = new ObjectOutputStream(out)) {
-                oout.writeObject(t);
-            }
-        }
-
-        @Override
-        public <T> byte[] writeValueAsBytes(T t) throws IOException {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            writeValue(t, baos) ;
-            return baos.toByteArray();
-        }
-
-        @Override
-        public <T> T readValue(InputStream in, Class<T> type) throws IOException {
-            try (ObjectInputStream oin = new ObjectInputStream(in)) {
-                return type.cast(oin.readObject());
-            } catch (ClassNotFoundException ex) {
-                throw new IOException(ex);
-            }
-        }
-
     }
 }

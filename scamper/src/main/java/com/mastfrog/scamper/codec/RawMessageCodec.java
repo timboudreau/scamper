@@ -25,7 +25,7 @@ import com.mastfrog.scamper.MessageType;
 import com.mastfrog.scamper.MessageTypeAndBuffer;
 import com.mastfrog.scamper.MessageTypeRegistry;
 import static com.mastfrog.scamper.ProtocolModule.GUICE_BINDING_SCAMPER_CODEC;
-import com.mastfrog.util.Codec;
+import com.mastfrog.util.codec.Codec;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;

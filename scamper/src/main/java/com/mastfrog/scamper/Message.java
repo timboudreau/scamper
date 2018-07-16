@@ -18,7 +18,7 @@
  */
 package com.mastfrog.scamper;
 
-import com.mastfrog.util.Checks;
+import com.mastfrog.util.preconditions.Checks;
 import java.util.Objects;
 
 /**

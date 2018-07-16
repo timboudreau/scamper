@@ -17,8 +17,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <netty.version>4.1.22.Final</netty.version>
-        <mastfrog.version>2.4.0</mastfrog.version>
+        <netty.version>4.1.25.Final</netty.version>
+        <mastfrog.version>2.5.0-dev</mastfrog.version>
     </properties>
     <build>
         <plugins>

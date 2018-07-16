@@ -10,7 +10,7 @@ import com.mastfrog.scamper.MessageTypeAndBuffer;
 import com.mastfrog.scamper.MessageTypeRegistry;
 import com.mastfrog.scamper.ProtocolModule;
 import com.mastfrog.scamper.compression.CompressingCodecTest.M;
-import com.mastfrog.util.Streams;
+import com.mastfrog.util.streams.Streams;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
