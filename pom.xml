@@ -23,16 +23,33 @@
     </properties>
     <build>
         <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.0.1</version>
-                    <configuration>
-                        <overview>${basedir}/src/main/javadoc/overview.html</overview>
-                        <quiet>true</quiet>
-                        <doclint>none</doclint>
-                    </configuration>
-                </plugin>  
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.1</version>
+                <configuration>
+                    <overview>${basedir}/src/main/javadoc/overview.html</overview>
+                    <quiet>true</quiet>
+                    <doclint>none</doclint>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.mastfrog</groupId>
+                <artifactId>revision-info-plugin</artifactId>
+                <version>0.8</version>
+                <executions>
+                    <execution>
+                        <id>revision-info-plugin</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>revision-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <auto>false</auto>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <pluginRepositories>
@@ -95,7 +112,7 @@
                 <groupId>${project.groupId}</groupId>
                 <artifactId>scamper-compression</artifactId>
                 <version>${project.version}</version>
-            </dependency>            
+            </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
