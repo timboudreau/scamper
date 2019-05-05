@@ -27,6 +27,7 @@ import com.mastfrog.scamper.codec.RawMessageCodec;
 import com.mastfrog.settings.Settings;
 import com.mastfrog.util.preconditions.Exceptions;
 import com.mastfrog.util.streams.Streams;
+import com.mastfrog.util.strings.Strings;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufInputStream;
@@ -97,8 +98,17 @@ final class CompressingCodec extends MessageCodec {
 
     static String bb2s(ByteBuf buf) throws IOException {
         int old = buf.readerIndex();
-        try (ByteBufInputStream in = new ByteBufInputStream(buf)) {
-            return Streams.readString(in);
+        try {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < buf.readableBytes(); i++) {
+                int val = buf.getByte(i);
+                if (val >= 32 && val < 127) {
+                    sb.append((char) val).append(' ');
+                } else {
+                    sb.append("0x").append(Strings.toPaddedHex(new byte[]{(byte) val})).append(' ');
+                }
+            }
+            return sb.toString();
         } finally {
             buf.readerIndex(old);
         }
