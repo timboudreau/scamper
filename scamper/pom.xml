@@ -7,7 +7,25 @@
         <artifactId>scamper-parent</artifactId>
     </parent>
     <artifactId>scamper</artifactId>
-    <packaging>jar</packaging>
+    <scm>
+        <url>git@github.com:timboudreau/scamper.git</url>
+        <connection>scm:git:https://github.com:timboudreau/scamper.git</connection>
+        <developerConnection>git@github.com:timboudreau/scamper.git</developerConnection>
+    </scm>
+    <issueManagement>
+        <system>Github</system>
+        <url>https://github.com:timboudreau/scamper/issues</url>
+    </issueManagement><organization>
+        <name>Mastfrog Technologies</name>
+        <url>https://mastfrog.com</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
     <name>Scamper</name>
     <dependencies>
         <dependency>
@@ -35,7 +53,7 @@
             <artifactId>bson4jackson</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.mastfrog</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>giulius</artifactId>
             <type>jar</type>
         </dependency>
@@ -45,18 +63,18 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.mastfrog</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>giulius-tests</artifactId>
             <scope>test</scope>
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>com.mastfrog</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>util-misc</artifactId>
             <version>${mastfrog.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.mastfrog</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>util-function</artifactId>
             <version>${mastfrog.version}</version>
         </dependency>

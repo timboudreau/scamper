@@ -8,7 +8,25 @@
     </parent>
     <name>Scamper Password Crypto</name>
     <artifactId>scamper-password-crypto</artifactId>
-    <packaging>jar</packaging>
+    <scm>
+        <url>git@github.com:timboudreau/scamper.git</url>
+        <connection>scm:git:https://github.com:timboudreau/scamper.git</connection>
+        <developerConnection>git@github.com:timboudreau/scamper.git</developerConnection>
+    </scm>
+    <issueManagement>
+        <system>Github</system>
+        <url>https://github.com:timboudreau/scamper/issues</url>
+    </issueManagement><organization>
+        <name>Mastfrog Technologies</name>
+        <url>https://mastfrog.com</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -24,7 +42,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.mastfrog</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>giulius-tests</artifactId>
             <scope>test</scope>
             <type>jar</type>
