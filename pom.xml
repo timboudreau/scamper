@@ -37,8 +37,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <netty.version>4.1.36.Final</netty.version>
-        <mastfrog.version>2.5.0</mastfrog.version>
-        <jackson.version>2.9.8</jackson.version>
+        <mastfrog.version>2.5.1-dev</mastfrog.version>
+        <jackson.version>2.9.9</jackson.version>
     </properties>
     <build>
         <plugins>

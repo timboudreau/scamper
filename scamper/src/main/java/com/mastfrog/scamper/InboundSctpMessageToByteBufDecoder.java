@@ -58,8 +58,8 @@ final class InboundSctpMessageToByteBufDecoder extends Netty5Handler<SctpMessage
 
     @Override
     protected void messageReceived(ChannelHandlerContext ctx, SctpMessage msg) throws Exception {
-        ctx.attr(SCTP_CHANNEL_KEY).set(msg.streamIdentifier());
-        Attribute<Fragments> fragmentsAttr = ctx.attr(QUEUE_KEY);
+        ctx.channel().attr(SCTP_CHANNEL_KEY).set(msg.streamIdentifier());
+        Attribute<Fragments> fragmentsAttr = ctx.channel().attr(QUEUE_KEY);
         Fragments fragments = fragmentsAttr.get();
         if (fragments == null) {
             fragmentsAttr.set(fragments = new Fragments());
