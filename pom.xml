@@ -36,9 +36,9 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <netty.version>4.1.36.Final</netty.version>
-        <mastfrog.version>2.5.1-dev</mastfrog.version>
-        <jackson.version>2.9.9</jackson.version>
+        <netty.version>4.1.60.Final</netty.version>
+        <mastfrog.version>2.7.2</mastfrog.version>
+        <jackson.version>2.12.2</jackson.version>
     </properties>
     <build>
         <plugins>
@@ -200,7 +200,7 @@
             <dependency>
                 <groupId>de.undercouch</groupId>
                 <artifactId>bson4jackson</artifactId>
-                <version>2.9.2</version>
+                <version>2.12.0</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
@@ -220,7 +220,7 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.10</version>
+                <version>4.13.1</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
