@@ -36,9 +36,9 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <netty.version>4.1.60.Final</netty.version>
-        <mastfrog.version>2.7.2</mastfrog.version>
-        <jackson.version>2.12.2</jackson.version>
+        <netty.version>4.1.70.Final</netty.version>
+        <mastfrog.version>2.7.3</mastfrog.version>
+        <jackson.version>2.13.0</jackson.version>
     </properties>
     <build>
         <plugins>
@@ -134,36 +134,6 @@
             </plugins>
         </pluginManagement>
     </build>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>timboudreau-plugins</id>
-            <name>timboudreau.com plugins</name>
-            <url>http://timboudreau.com/maven/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
-    <repositories>
-        <repository>
-            <id>timboudreau-builds</id>
-            <name>timboudreau.com builds</name>
-            <url>http://timboudreau.com/maven/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>never</updatePolicy>
-            </snapshots>
-        </repository>
-    </repositories>
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -220,7 +190,7 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>4.10</version>
+                <version>4.13.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
