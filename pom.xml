@@ -1,9 +1,12 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.mastfrog</groupId>
-    <version>2.2</version>
+    <version>2.3</version>
     <artifactId>scamper-parent</artifactId>
+
     <scm>
         <url>git@github.com:timboudreau/scamper.git</url>
         <connection>scm:git:https://github.com:timboudreau/scamper.git</connection>
@@ -12,35 +15,30 @@
     <issueManagement>
         <system>Github</system>
         <url>https://github.com:timboudreau/scamper/issues</url>
-    </issueManagement><organization>
+    </issueManagement>
+
+    <organization>
         <name>Mastfrog Technologies</name>
         <url>https://mastfrog.com</url>
     </organization>
+
     <licenses>
         <license>
             <name>MIT</name>
             <url>https://opensource.org/licenses/MIT</url>
             <distribution>repo</distribution>
         </license>
-    </licenses><name>Scamper Parent</name>
+    </licenses>
+    <name>Scamper Parent</name>
     <packaging>pom</packaging>
     <modules>
         <module>scamper</module>
-        <module>scamper-queries-demo</module>
-        <module>scamper-date-demo</module>
         <module>scamper-compression</module>
+        <module>scamper-date-demo</module>
         <module>scamper-password-crypto</module>
+        <module>scamper-queries-demo</module>
     </modules>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <netty.version>4.1.76.Final</netty.version>
-        <mastfrog.version>2.8.1</mastfrog.version>
-        <jackson.version>2.13.2</jackson.version>
-        <jackson.databind.version>2.13.2.2</jackson.databind.version>
-    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -135,66 +133,7 @@
             </plugins>
         </pluginManagement>
     </build>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.jcraft</groupId>
-                <artifactId>jzlib</artifactId>
-                <type>jar</type>
-                <version>1.1.3</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>scamper</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>scamper-compression</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.databind.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.mastfrog</groupId>
-                <artifactId>giulius</artifactId>
-                <version>${mastfrog.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.mastfrog</groupId>
-                <artifactId>giulius-tests</artifactId>
-                <version>${mastfrog.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.undercouch</groupId>
-                <artifactId>bson4jackson</artifactId>
-                <version>2.12.0</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-handler</artifactId>
-                <version>${netty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-transport</artifactId>
-                <version>${netty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-transport-sctp</artifactId>
-                <version>${netty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.13.2</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+
     <profiles>
         <profile>
             <id>reflection-indexing</id>
@@ -204,6 +143,7 @@
                     <exists>${basedir}/index-reflection.marker</exists>
                 </file>
             </activation>
+
             <properties>
                 <maven.compiler.force.javac>true</maven.compiler.force.javac>
             </properties>
@@ -253,6 +193,7 @@
                     <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
                 </repository>
             </distributionManagement>
+
             <build>
                 <plugins>
                     <plugin>
@@ -297,7 +238,7 @@
                             <serverId>ossrh</serverId>
                             <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                             <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                            <!--<skipStagingRepositoryClose>true</skipStagingRepositoryClose>-->
+<!--     <skipStagingRepositoryClose>true</skipStagingRepositoryClose>     -->
                         </configuration>
                     </plugin>
                     <plugin>
@@ -317,4 +258,84 @@
             </build>
         </profile>
     </profiles>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>scamper</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>scamper-compression</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>util-function</artifactId>
+                <version>${mastfrog.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>util-misc</artifactId>
+                <version>${mastfrog.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.databind.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.jcraft</groupId>
+                <artifactId>jzlib</artifactId>
+                <version>1.1.3</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mastfrog</groupId>
+                <artifactId>giulius</artifactId>
+                <version>${mastfrog.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mastfrog</groupId>
+                <artifactId>giulius-tests</artifactId>
+                <version>${mastfrog.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.undercouch</groupId>
+                <artifactId>bson4jackson</artifactId>
+                <version>2.12.0</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-transport-sctp</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.13.2</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <properties>
+        <jackson.databind.version>2.13.2.2</jackson.databind.version>
+        <jackson.version>2.13.2</jackson.version>
+        <mastfrog.version>2.8.1</mastfrog.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <netty.version>4.1.76.Final</netty.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
 </project>

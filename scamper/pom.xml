@@ -1,12 +1,16 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>com.mastfrog</groupId>
-        <version>2.2</version>
+        <version>2.3</version>
         <artifactId>scamper-parent</artifactId>
     </parent>
     <artifactId>scamper</artifactId>
+
     <scm>
         <url>git@github.com:timboudreau/scamper.git</url>
         <connection>scm:git:https://github.com:timboudreau/scamper.git</connection>
@@ -15,10 +19,13 @@
     <issueManagement>
         <system>Github</system>
         <url>https://github.com:timboudreau/scamper/issues</url>
-    </issueManagement><organization>
+    </issueManagement>
+
+    <organization>
         <name>Mastfrog Technologies</name>
         <url>https://mastfrog.com</url>
     </organization>
+
     <licenses>
         <license>
             <name>MIT</name>
@@ -31,22 +38,18 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport</artifactId>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-sctp</artifactId>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-handler</artifactId>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>de.undercouch</groupId>
@@ -55,7 +58,6 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>giulius</artifactId>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -66,21 +68,16 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>giulius-tests</artifactId>
             <scope>test</scope>
-            <type>jar</type>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>util-misc</artifactId>
-            <version>${mastfrog.version}</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>util-function</artifactId>
-            <version>${mastfrog.version}</version>
         </dependency>
     </dependencies>
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
+
+    <properties/>
 </project>
